@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "585906745497",
+    "project_id": "hadyr-94932",
+    "storage_bucket": "hadyr-94932.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585906745497:android:40453676def4fa2c300808",
+        "android_client_info": {
+          "package_name": "com.example.hadyr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyUfPBaseO1BvVk990MMdANxPb7B_Xj6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
