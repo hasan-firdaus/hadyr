@@ -3,25 +3,26 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/app_utils.dart';
-import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _nipNimCtrl = TextEditingController();
+  
   bool _isLoading = false;
   bool _obscurePassword = true;
-
   late TabController _tabController;
   final AuthService _authService = AuthService();
 
@@ -29,90 +30,58 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Listen to tab changes to clear NIP/NIM field
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _nipNimCtrl.clear();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _nipNimCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleRegister() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isLoading = true);
     
-    // --- DEMO BYPASS ---
-    // Karena halaman register belum ada, kita gunakan bypass untuk testing UI
-    if (_emailCtrl.text == 'dosen@demo.com') {
-      await Future.delayed(const Duration(seconds: 1)); // simulasi loading
-      if (mounted) setState(() => _isLoading = false);
-      // Verify selected tab matches lecturer role
-      if (_tabController.index != 0) {
-        _showError('Akun Dosen hanya dapat login melalui tab Dosen');
-        return;
-      }
-      _navigateByRole(const UserModel(
-        uid: 'dosen-demo',
-        name: 'Dr. Hendra Gunawan, M.Kom',
-        email: 'dosen@demo.com',
-        role: 'lecturer',
-        nip: '198501152010011002',
-      ));
-      return;
-    } else if (_emailCtrl.text == 'mhs@demo.com') {
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) setState(() => _isLoading = false);
-      // Verify selected tab matches student role
-      if (_tabController.index != 1) {
-        _showError('Akun Mahasiswa hanya dapat login melalui tab Mahasiswa');
-        return;
-      }
-      _navigateByRole(const UserModel(
-        uid: 'mhs-demo',
-        name: 'Budi Santoso',
-        email: 'mhs@demo.com',
-        role: 'student',
-        nim: '211011001',
-      ));
-      return;
-    }
-    // -------------------
+    setState(() => _isLoading = true);
 
     try {
-      final user = await _authService.login(
-        _emailCtrl.text,
-        _passwordCtrl.text,
+      final isLecturer = _tabController.index == 0;
+      final user = await _authService.register(
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        name: _nameCtrl.text.trim(),
+        role: isLecturer ? 'lecturer' : 'student',
+        nip: isLecturer ? _nipNimCtrl.text.trim() : null,
+        nim: !isLecturer ? _nipNimCtrl.text.trim() : null,
       );
+
       if (!mounted) return;
-      if (user == null) {
-        _showError('Akun tidak ditemukan');
-        return;
+      
+      if (user != null) {
+        // Success: Go to Login or Dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registrasi Berhasil! Silakan Login.'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        Navigator.of(context).pop(); // Go back to Login
       }
-      // Role‑tab validation
-      bool isLecturerTab = _tabController.index == 0;
-      if (user.isLecturer && !isLecturerTab) {
-        _showError('Akun Dosen hanya dapat login melalui tab Dosen');
-        return;
-      }
-      if (!user.isLecturer && isLecturerTab) {
-        _showError('Akun Mahasiswa hanya dapat login melalui tab Mahasiswa');
-        return;
-      }
-      _navigateByRole(user);
     } catch (e) {
       _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _navigateByRole(UserModel user) {
-    if (user.isLecturer) {
-      Navigator.of(context).pushReplacementNamed('/lecturer/dashboard', arguments: user);
-    } else {
-      Navigator.of(context).pushReplacementNamed('/student/home', arguments: user);
     }
   }
 
@@ -132,35 +101,31 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.pagePadding),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppSizes.xxl),
-              // Logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-                child: Image.asset(
-                  'assets/logo.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
               const Text(
-                AppStrings.appName,
+                'Buat Akun Baru',
                 style: TextStyle(
                   fontSize: AppSizes.fontDisplay,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               const Text(
-                AppStrings.appTagline,
+                'Silakan isi data diri Anda untuk mendaftar',
                 style: TextStyle(
                   fontSize: AppSizes.fontMd,
                   color: AppColors.textSecondary,
@@ -196,11 +161,21 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: AppSizes.lg),
 
-              // Form
               Form(
                 key: _formKey,
                 child: Column(
                   children: [
+                    // Name
+                    TextFormField(
+                      controller: _nameCtrl,
+                      validator: (v) => v!.isEmpty ? 'Nama tidak boleh kosong' : null,
+                      decoration: const InputDecoration(
+                        labelText: AppStrings.name,
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+
                     // Email
                     TextFormField(
                       controller: _emailCtrl,
@@ -208,9 +183,21 @@ class _LoginScreenState extends State<LoginScreen>
                       validator: AppUtils.validateEmail,
                       decoration: const InputDecoration(
                         labelText: AppStrings.email,
-                        hintText: 'contoh@email.com',
-                        prefixIcon:
-                            Icon(Icons.email_outlined, color: AppColors.textSecondary),
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+
+                    // Role Specific (NIP/NIM)
+                    TextFormField(
+                      controller: _nipNimCtrl,
+                      keyboardType: TextInputType.number,
+                      validator: (v) => v!.isEmpty 
+                          ? '${_tabController.index == 0 ? "NIP" : "NIM"} tidak boleh kosong' 
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: _tabController.index == 0 ? AppStrings.nip : AppStrings.nim,
+                        prefixIcon: const Icon(Icons.badge_outlined),
                       ),
                     ),
                     const SizedBox(height: AppSizes.md),
@@ -222,50 +209,37 @@ class _LoginScreenState extends State<LoginScreen>
                       validator: AppUtils.validatePassword,
                       decoration: InputDecoration(
                         labelText: AppStrings.password,
-                        hintText: 'Minimal 6 karakter',
-                        prefixIcon: const Icon(Icons.lock_outline,
-                            color: AppColors.textSecondary),
+                        prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppColors.textSecondary,
                           ),
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                     ),
                     const SizedBox(height: AppSizes.xl),
 
-                    // Login Button
                     CustomButton(
-                      label: AppStrings.loginButton,
-                      onPressed: _handleLogin,
+                      label: AppStrings.registerButton,
+                      onPressed: _handleRegister,
                       isLoading: _isLoading,
                     ),
                     const SizedBox(height: AppSizes.md),
 
-                    // Go to Register
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          AppStrings.noAccount,
-                          style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: AppSizes.fontMd),
-                        ),
+                        const Text(AppStrings.haveAccount),
                         GestureDetector(
-                          onTap: () =>
-                              Navigator.of(context).pushNamed('/register'),
+                          onTap: () => Navigator.of(context).pop(),
                           child: const Text(
-                            AppStrings.register,
+                            AppStrings.login,
                             style: TextStyle(
                               color: AppColors.primary,
-                              fontSize: AppSizes.fontMd,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),

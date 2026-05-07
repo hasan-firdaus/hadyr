@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'models/user_model.dart';
 import 'screens/shared/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
 import 'screens/lecturer/dashboard_page.dart';
 import 'screens/student/home_page.dart';
 
@@ -36,6 +37,9 @@ class HadyrApp extends StatelessWidget {
 
       case '/login':
         return _fade(const LoginScreen());
+
+      case '/register':
+        return _fade(const RegisterScreen());
 
       case '/lecturer/dashboard':
         final user = settings.arguments as UserModel?;
