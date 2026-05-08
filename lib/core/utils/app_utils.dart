@@ -58,9 +58,8 @@ class AppUtils {
     return (hadir / total) * 100;
   }
 
-  /// Singkat nama panjang
-  static String shortenName(String name, {int maxLength = 20}) {
-    if (name.length <= maxLength) return name;
-    return '${name.substring(0, maxLength)}...';
+  /// Dapatkan nama hari saat ini (Senin, Selasa, dst)
+  static String getCurrentDayName() {
+    return DateFormat('EEEE', 'id_ID').format(DateTime.now());
   }
 }

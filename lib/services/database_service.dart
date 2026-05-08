@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/attendance_model.dart';
 import '../models/course_model.dart';
 import '../models/user_model.dart';
+import '../core/utils/app_utils.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -10,9 +11,11 @@ class DatabaseService {
 
   /// Stream jadwal dosen hari ini
   Stream<List<CourseModel>> getLecturerCoursesStream(String lecturerId) {
+    final today = AppUtils.getCurrentDayName();
     return _db
         .collection('courses')
         .where('lecturerId', isEqualTo: lecturerId)
+        .where('day', isEqualTo: today)
         .snapshots()
         .map((snap) => snap.docs
             .map((d) => CourseModel.fromMap(d.id, d.data()))
@@ -21,10 +24,12 @@ class DatabaseService {
 
   /// Stream semua kelas mahasiswa (by prodi/semester)
   Stream<List<CourseModel>> getStudentCoursesStream(String prodi, int semester) {
+    final today = AppUtils.getCurrentDayName();
     return _db
         .collection('courses')
         .where('prodi', isEqualTo: prodi)
         .where('semester', isEqualTo: semester)
+        .where('day', isEqualTo: today)
         .snapshots()
         .map((snap) => snap.docs
             .map((d) => CourseModel.fromMap(d.id, d.data()))
