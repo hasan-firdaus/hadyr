@@ -4,6 +4,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../models/course_model.dart';
 import '../../models/user_model.dart';
+import '../../services/database_service.dart';
 import '../../widgets/stat_card.dart';
 import '../shared/profile_page.dart';
 import 'history_teaching.dart';
@@ -19,52 +20,7 @@ class LecturerDashboard extends StatefulWidget {
 
 class _LecturerDashboardState extends State<LecturerDashboard> {
   int _currentIndex = 0;
-
-  // ── Dummy data sesuai design ────────────────────────────────
-  final List<CourseModel> _todayCourses = [
-    CourseModel(
-      id: '1',
-      name: 'Pemrograman Web Lanjut',
-      code: 'TI-301',
-      lecturerId: 'dosen1',
-      lecturerName: 'Dr. Hendra Gunawan, M.Kom',
-      room: 'Ruang 201',
-      building: 'Gedung A',
-      day: 'Senin',
-      startTime: '08:00',
-      endTime: '10:30',
-      semester: 5,
-      prodi: 'Teknik Informatika',
-    ),
-    CourseModel(
-      id: '2',
-      name: 'Basis Data Relasional',
-      code: 'TI-201',
-      lecturerId: 'dosen1',
-      lecturerName: 'Dr. Hendra Gunawan, M.Kom',
-      room: 'Ruang 101',
-      building: 'Gedung B',
-      day: 'Senin',
-      startTime: '13:00',
-      endTime: '15:30',
-      semester: 3,
-      prodi: 'Teknik Informatika',
-    ),
-    CourseModel(
-      id: '3',
-      name: 'Rekayasa Data',
-      code: 'TI-401',
-      lecturerId: 'dosen1',
-      lecturerName: 'Dr. Hendra Gunawan, M.Kom',
-      room: 'Lab Komputer 2',
-      building: 'Gedung C',
-      day: 'Senin',
-      startTime: '16:00',
-      endTime: '17:40',
-      semester: 7,
-      prodi: 'Teknik Informatika',
-    ),
-  ];
+  final DatabaseService _dbService = DatabaseService();
 
   late final List<Widget> _pages;
 
@@ -74,7 +30,7 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
     _pages = [
       _DashboardHome(
         user: widget.user,
-        todayCourses: _todayCourses,
+        dbService: _dbService,
         onInputAbsensi: (course) {
           Navigator.push(
             context,
@@ -136,12 +92,12 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
 // ── Dashboard Home Tab ──────────────────────────────────────────
 class _DashboardHome extends StatelessWidget {
   final UserModel user;
-  final List<CourseModel> todayCourses;
+  final DatabaseService dbService;
   final void Function(CourseModel) onInputAbsensi;
 
   const _DashboardHome({
     required this.user,
-    required this.todayCourses,
+    required this.dbService,
     required this.onInputAbsensi,
   });
 
@@ -188,22 +144,52 @@ class _DashboardHome extends StatelessWidget {
             ),
 
             // ── Course Cards ────────────────────────────────
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSizes.pagePadding,
-                    i == 0 ? AppSizes.md : AppSizes.sm,
-                    AppSizes.pagePadding,
-                    0,
+            StreamBuilder<List<CourseModel>>(
+              stream: dbService.getLecturerCoursesStream(user.uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                
+                if (snapshot.hasError) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('Error: ${snapshot.error}')),
+                  );
+                }
+
+                final courses = snapshot.data ?? [];
+                
+                if (courses.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSizes.xl),
+                        child: Text('Tidak ada jadwal kuliah hari ini'),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSizes.pagePadding,
+                        i == 0 ? AppSizes.md : AppSizes.sm,
+                        AppSizes.pagePadding,
+                        0,
+                      ),
+                      child: _CourseCard(
+                        course: courses[i],
+                        onInputAbsensi: () => onInputAbsensi(courses[i]),
+                      ),
+                    ),
+                    childCount: courses.length,
                   ),
-                  child: _CourseCard(
-                    course: todayCourses[i],
-                    onInputAbsensi: () => onInputAbsensi(todayCourses[i]),
-                  ),
-                ),
-                childCount: todayCourses.length,
-              ),
+                );
+              },
             ),
 
             const SliverToBoxAdapter(
@@ -281,11 +267,11 @@ class _DashboardHome extends StatelessWidget {
           const SizedBox(height: AppSizes.md),
 
           // Stats Row
-          StatCardRow(
-            hadir: 42,
-            izin: 5,
-            sakit: 2,
-            alfa: 1,
+          const StatCardRow(
+            hadir: 0,
+            izin: 0,
+            sakit: 0,
+            alfa: 0,
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../../core/constants/app_strings.dart';
 import '../../models/attendance_model.dart';
 import '../../models/course_model.dart';
 import '../../models/user_model.dart';
+import '../../services/database_service.dart';
 import '../../widgets/custom_button.dart';
 
 class InputAttendancePage extends StatefulWidget {
@@ -22,56 +23,102 @@ class InputAttendancePage extends StatefulWidget {
 }
 
 class _InputAttendancePageState extends State<InputAttendancePage> {
+  final DatabaseService _dbService = DatabaseService();
+  bool _isLoading = true;
   bool _isSaving = false;
+  List<Map<String, dynamic>> _students = [];
 
-  // Dummy mahasiswa sesuai design
-  final List<Map<String, dynamic>> _students = [
-    {'nim': '211011001', 'name': 'Budi Santoso', 'status': AttendanceStatus.hadir},
-    {'nim': '211011002', 'name': 'Rina Wulandari', 'status': AttendanceStatus.izin},
-    {'nim': '211011003', 'name': 'Fika Pratiwi', 'status': AttendanceStatus.hadir},
-    {'nim': '211011004', 'name': 'Arif Setiawan', 'status': AttendanceStatus.hadir},
-    {'nim': '211011005', 'name': 'Rio Mahendra', 'status': AttendanceStatus.alfa},
-    {'nim': '211011006', 'name': 'Dian Pertiwi', 'status': AttendanceStatus.sakit},
-    {'nim': '211011007', 'name': 'Sinta Rahayu', 'status': AttendanceStatus.hadir},
-    {'nim': '211011008', 'name': 'Bagas Nugroho', 'status': AttendanceStatus.hadir},
-    {'nim': '211011009', 'name': 'Nadia Fitriani', 'status': AttendanceStatus.terlambat},
-    {'nim': '211011010', 'name': 'Gilang Ramadhan', 'status': AttendanceStatus.hadir},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadStudents();
+  }
+
+  Future<void> _loadStudents() async {
+    try {
+      // Mengambil daftar mahasiswa berdasarkan prodi matakuliah
+      final students = await _dbService.getStudentsStream(widget.course.prodi).first;
+      
+      setState(() {
+        _students = students.map((s) => {
+          'uid': s.uid,
+          'nim': s.nim ?? '-',
+          'name': s.name,
+          'status': AttendanceStatus.hadir, // DEFAULT HADIR
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data mahasiswa: $e')),
+        );
+      }
+    }
+  }
 
   void _setStatus(int index, AttendanceStatus status) {
     setState(() => _students[index]['status'] = status);
   }
 
   Future<void> _handleSave() async {
+    if (_students.isEmpty) return;
+
     setState(() => _isSaving = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Absensi berhasil disimpan!'),
-        backgroundColor: AppColors.statusHadir,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-      ),
-    );
-    Navigator.pop(context);
+    try {
+      final now = DateTime.now();
+      final records = _students.map((s) => AttendanceModel(
+        id: '', // Biarkan service generate ID otomatis di Firestore
+        courseId: widget.course.id,
+        courseName: widget.course.name,
+        studentId: s['uid'],
+        studentName: s['name'],
+        studentNim: s['nim'],
+        status: s['status'],
+        date: now,
+        meetingNumber: 1, // Bisa disesuaikan nanti
+        room: widget.course.room,
+        building: widget.course.building,
+      )).toList();
+
+      await _dbService.saveAttendanceBatch(records);
+
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Absensi berhasil disimpan ke Firebase!'),
+          backgroundColor: AppColors.statusHadir,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() => _isSaving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan absensi: $e')),
+        );
+      }
+    }
   }
 
-  int get _hadirCount => _students
-      .where((s) => s['status'] == AttendanceStatus.hadir)
-      .length;
-  int get _izinCount => _students
-      .where((s) => s['status'] == AttendanceStatus.izin)
-      .length;
-  int get _sakitCount => _students
-      .where((s) => s['status'] == AttendanceStatus.sakit)
-      .length;
+  int get _hadirCount =>
+      _students.where((s) => s['status'] == AttendanceStatus.hadir).length;
+  int get _izinCount =>
+      _students.where((s) => s['status'] == AttendanceStatus.izin).length;
+  int get _sakitCount =>
+      _students.where((s) => s['status'] == AttendanceStatus.sakit).length;
   int get _alfaCount => _students
-      .where((s) =>
-          s['status'] == AttendanceStatus.alfa ||
-          s['status'] == AttendanceStatus.terlambat)
+      .where(
+        (s) =>
+            s['status'] == AttendanceStatus.alfa ||
+            s['status'] == AttendanceStatus.terlambat,
+      )
       .length;
 
   @override
@@ -96,21 +143,27 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
 
           // ── Student List ────────────────────────────────
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSizes.pagePadding, AppSizes.md,
-                  AppSizes.pagePadding, AppSizes.xl),
-              itemCount: _students.length,
-              separatorBuilder: (ctx, i) =>
-                  const SizedBox(height: AppSizes.sm),
-              itemBuilder: (ctx, i) => _StudentAttendanceTile(
-                index: i + 1,
-                nim: _students[i]['nim'],
-                name: _students[i]['name'],
-                status: _students[i]['status'],
-                onStatusChanged: (s) => _setStatus(i, s),
-              ),
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _students.isEmpty
+                    ? const Center(child: Text('Tidak ada mahasiswa di prodi ini'))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSizes.pagePadding,
+                            AppSizes.md,
+                            AppSizes.pagePadding,
+                            AppSizes.xl),
+                        itemCount: _students.length,
+                        separatorBuilder: (ctx, i) =>
+                            const SizedBox(height: AppSizes.sm),
+                        itemBuilder: (ctx, i) => _StudentAttendanceTile(
+                          index: i + 1,
+                          nim: _students[i]['nim'],
+                          name: _students[i]['name'],
+                          status: _students[i]['status'],
+                          onStatusChanged: (s) => _setStatus(i, s),
+                        ),
+                      ),
           ),
 
           // ── Save Button ─────────────────────────────────
@@ -133,8 +186,11 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(AppSizes.radiusMd),
             ),
-            child: const Icon(Icons.menu_book_rounded,
-                color: AppColors.primary, size: 22),
+            child: const Icon(
+              Icons.menu_book_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
           ),
           const SizedBox(width: AppSizes.md),
           Expanded(
@@ -169,7 +225,9 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
   Widget _buildSummaryStats() {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.pagePadding, vertical: AppSizes.md),
+        horizontal: AppSizes.pagePadding,
+        vertical: AppSizes.md,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
@@ -179,17 +237,33 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
       ),
       child: Row(
         children: [
-          _StatBadge(label: 'Hadir', count: _hadirCount,
-              color: AppColors.statusHadir, bg: AppColors.statusHadirBg),
+          _StatBadge(
+            label: 'Hadir',
+            count: _hadirCount,
+            color: AppColors.statusHadir,
+            bg: AppColors.statusHadirBg,
+          ),
           const SizedBox(width: AppSizes.sm),
-          _StatBadge(label: 'Izin', count: _izinCount,
-              color: AppColors.statusIzin, bg: AppColors.statusIzinBg),
+          _StatBadge(
+            label: 'Izin',
+            count: _izinCount,
+            color: AppColors.statusIzin,
+            bg: AppColors.statusIzinBg,
+          ),
           const SizedBox(width: AppSizes.sm),
-          _StatBadge(label: 'Sakit', count: _sakitCount,
-              color: AppColors.statusSakit, bg: AppColors.statusSakitBg),
+          _StatBadge(
+            label: 'Sakit',
+            count: _sakitCount,
+            color: AppColors.statusSakit,
+            bg: AppColors.statusSakitBg,
+          ),
           const SizedBox(width: AppSizes.sm),
-          _StatBadge(label: 'Alfa', count: _alfaCount,
-              color: AppColors.statusAlfa, bg: AppColors.statusAlfaBg),
+          _StatBadge(
+            label: 'Alfa',
+            count: _alfaCount,
+            color: AppColors.statusAlfa,
+            bg: AppColors.statusAlfaBg,
+          ),
         ],
       ),
     );
@@ -197,8 +271,12 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
 
   Widget _buildSaveBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSizes.pagePadding,
-          AppSizes.md, AppSizes.pagePadding, AppSizes.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.pagePadding,
+        AppSizes.md,
+        AppSizes.pagePadding,
+        AppSizes.lg,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
@@ -249,8 +327,9 @@ class _StatBadge extends StatelessWidget {
             Text(
               label,
               style: const TextStyle(
-                  fontSize: AppSizes.fontXs,
-                  color: AppColors.textSecondary),
+                fontSize: AppSizes.fontXs,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -318,8 +397,9 @@ class _StudentAttendanceTile extends StatelessWidget {
                     Text(
                       nim,
                       style: const TextStyle(
-                          fontSize: AppSizes.fontXs,
-                          color: AppColors.textSecondary),
+                        fontSize: AppSizes.fontXs,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),

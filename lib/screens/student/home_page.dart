@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../models/attendance_model.dart';
 import '../../models/course_model.dart';
 import '../../models/user_model.dart';
+import '../../services/database_service.dart';
 import '../../widgets/stat_card.dart';
 import '../shared/profile_page.dart';
 import 'history_student.dart';
@@ -19,46 +21,15 @@ class StudentHomePage extends StatefulWidget {
 
 class _StudentHomePageState extends State<StudentHomePage> {
   int _currentIndex = 0;
+  final DatabaseService _dbService = DatabaseService();
 
   late final List<Widget> _pages;
-
-  // Dummy jadwal hari ini
-  final List<CourseModel> _todayCourses = [
-    CourseModel(
-      id: '1',
-      name: 'Pemrograman Web Lanjut',
-      code: 'TI-301',
-      lecturerId: 'dosen1',
-      lecturerName: 'Dr. Hendra Gunawan, M.Kom',
-      room: 'Ruang 201',
-      building: 'Gedung A',
-      day: 'Senin',
-      startTime: '08:00',
-      endTime: '10:30',
-      semester: 5,
-      prodi: 'Teknik Informatika',
-    ),
-    CourseModel(
-      id: '2',
-      name: 'Basis Data Relasional',
-      code: 'TI-201',
-      lecturerId: 'dosen1',
-      lecturerName: 'Dr. Hendra Gunawan, M.Kom',
-      room: 'Ruang 101',
-      building: 'Gedung B',
-      day: 'Senin',
-      startTime: '13:00',
-      endTime: '15:30',
-      semester: 5,
-      prodi: 'Teknik Informatika',
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
     _pages = [
-      _StudentHomeTab(user: widget.user, todayCourses: _todayCourses),
+      _StudentHomeTab(user: widget.user, dbService: _dbService),
       StudentHistoryPage(user: widget.user),
       ProfilePage(user: widget.user),
     ];
@@ -108,11 +79,11 @@ class _StudentHomePageState extends State<StudentHomePage> {
 // ── Student Home Tab ────────────────────────────────────────────
 class _StudentHomeTab extends StatelessWidget {
   final UserModel user;
-  final List<CourseModel> todayCourses;
+  final DatabaseService dbService;
 
   const _StudentHomeTab({
     required this.user,
-    required this.todayCourses,
+    required this.dbService,
   });
 
   @override
@@ -143,19 +114,34 @@ class _StudentHomeTab extends StatelessWidget {
             ),
 
             // ── Course Cards ────────────────────────────────
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSizes.pagePadding,
-                    i == 0 ? 0 : AppSizes.sm,
-                    AppSizes.pagePadding,
-                    0,
+            StreamBuilder<List<CourseModel>>(
+              stream: dbService.getStudentCoursesStream(
+                  user.prodi ?? '', 5), // Asumsi semester 5
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverToBoxAdapter(
+                      child: Center(child: CircularProgressIndicator()));
+                }
+                final courses = snapshot.data ?? [];
+                if (courses.isEmpty) {
+                  return const SliverToBoxAdapter(
+                      child: Center(child: Text('Tidak ada jadwal kuliah')));
+                }
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSizes.pagePadding,
+                        i == 0 ? 0 : AppSizes.sm,
+                        AppSizes.pagePadding,
+                        0,
+                      ),
+                      child: _StudentCourseCard(course: courses[i]),
+                    ),
+                    childCount: courses.length,
                   ),
-                  child: _StudentCourseCard(course: todayCourses[i]),
-                ),
-                childCount: todayCourses.length,
-              ),
+                );
+              },
             ),
 
             // ── Riwayat Singkat ─────────────────────────────
@@ -176,14 +162,30 @@ class _StudentHomeTab extends StatelessWidget {
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.pagePadding),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) => _RecentAttendanceTile(
-                      record: _recentRecords[i]),
-                  childCount: _recentRecords.length,
-                ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding),
+              sliver: StreamBuilder<List<AttendanceModel>>(
+                stream: dbService.getStudentAttendanceStream(user.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverToBoxAdapter(
+                        child: Center(child: CircularProgressIndicator()));
+                  }
+                  final records = snapshot.data ?? [];
+                  if (records.isEmpty) {
+                    return const SliverToBoxAdapter(
+                        child: Center(child: Text('Belum ada riwayat')));
+                  }
+                  // Ambil 5 terakhir saja untuk dashboard
+                  final displayRecords = records.take(5).toList();
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) =>
+                          _RecentAttendanceTile(record: displayRecords[i]),
+                      childCount: displayRecords.length,
+                    ),
+                  );
+                },
               ),
             ),
 
@@ -258,35 +260,13 @@ class _StudentHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.md),
           // Stat summary
-          StatCardRow(hadir: 38, izin: 3, sakit: 1, alfa: 2),
+          const StatCardRow(hadir: 0, izin: 0, sakit: 0, alfa: 0),
         ],
       ),
     );
   }
 
-  // Dummy recent records
-  static final List<_RecentRecord> _recentRecords = [
-    _RecentRecord(
-      courseName: 'Pemrograman Web Lanjut',
-      date: 'Senin, 25 Apr 2026',
-      status: AttendanceStatus.hadir,
-    ),
-    _RecentRecord(
-      courseName: 'Basis Data Relasional',
-      date: 'Senin, 25 Apr 2026',
-      status: AttendanceStatus.hadir,
-    ),
-    _RecentRecord(
-      courseName: 'Pemrograman Web Lanjut',
-      date: 'Senin, 18 Apr 2026',
-      status: AttendanceStatus.izin,
-    ),
-    _RecentRecord(
-      courseName: 'Rekayasa Data',
-      date: 'Kamis, 17 Apr 2026',
-      status: AttendanceStatus.hadir,
-    ),
-  ];
+  // Dummy data removed.
 }
 
 // ── Student Course Card ─────────────────────────────────────────
@@ -392,7 +372,7 @@ class _StudentCourseCard extends StatelessWidget {
 
 // ── Recent Attendance Tile ──────────────────────────────────────
 class _RecentAttendanceTile extends StatelessWidget {
-  final _RecentRecord record;
+  final AttendanceModel record;
   const _RecentAttendanceTile({required this.record});
 
   Color get _statusColor {
@@ -471,7 +451,7 @@ class _RecentAttendanceTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  record.date,
+                  DateFormat('EEEE, dd MMM yyyy', 'id_ID').format(record.date),
                   style: const TextStyle(
                     fontSize: AppSizes.fontXs,
                     color: AppColors.textSecondary,
@@ -501,12 +481,4 @@ class _RecentAttendanceTile extends StatelessWidget {
   }
 }
 
-class _RecentRecord {
-  final String courseName;
-  final String date;
-  final AttendanceStatus status;
-  const _RecentRecord(
-      {required this.courseName,
-      required this.date,
-      required this.status});
-}
+// File cleanup: removed _RecentRecord class as it was replaced by AttendanceModel.

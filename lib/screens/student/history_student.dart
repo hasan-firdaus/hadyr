@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../models/attendance_model.dart';
 import '../../models/user_model.dart';
+import '../../services/database_service.dart';
 import '../../widgets/stat_card.dart';
 
 class StudentHistoryPage extends StatefulWidget {
@@ -16,6 +18,7 @@ class StudentHistoryPage extends StatefulWidget {
 class _StudentHistoryPageState extends State<StudentHistoryPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final DatabaseService _dbService = DatabaseService();
 
   final List<String> _filterTabs = [
     'Semua',
@@ -23,74 +26,6 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
     'Izin',
     'Sakit',
     'Alfa',
-  ];
-
-  // Dummy riwayat absensi sesuai design
-  final List<_AttendanceRecord> _records = [
-    _AttendanceRecord(
-      courseName: 'Pemrograman Web Lanjut',
-      date: 'Senin, 25 April 2026',
-      time: '08:00 - 10:30',
-      room: 'Ruang 201, Gedung A',
-      status: AttendanceStatus.hadir,
-      meeting: 12,
-    ),
-    _AttendanceRecord(
-      courseName: 'Basis Data Relasional',
-      date: 'Senin, 25 April 2026',
-      time: '13:00 - 15:30',
-      room: 'Ruang 101, Gedung B',
-      status: AttendanceStatus.hadir,
-      meeting: 11,
-    ),
-    _AttendanceRecord(
-      courseName: 'Sistem Operasi',
-      date: 'Selasa, 24 April 2026',
-      time: '10:00 - 12:30',
-      room: 'Ruang 304, Gedung G',
-      status: AttendanceStatus.izin,
-      meeting: 10,
-    ),
-    _AttendanceRecord(
-      courseName: 'Pemrograman Web Lanjut',
-      date: 'Senin, 18 April 2026',
-      time: '08:00 - 10:30',
-      room: 'Ruang 201, Gedung A',
-      status: AttendanceStatus.hadir,
-      meeting: 11,
-    ),
-    _AttendanceRecord(
-      courseName: 'Sistem Operasi',
-      date: 'Selasa, 17 April 2026',
-      time: '10:00 - 12:30',
-      room: 'Ruang 304, Gedung G',
-      status: AttendanceStatus.terlambat,
-      meeting: 9,
-    ),
-    _AttendanceRecord(
-      courseName: 'Kalkulus Lanjut',
-      date: 'Rabu, 16 April 2026',
-      time: '07:30 - 09:10',
-      room: 'Ruang 102, Gedung F',
-      status: AttendanceStatus.sakit,
-      meeting: 10,
-    ),
-    _AttendanceRecord(
-      courseName: 'Basis Data Relasional',
-      date: 'Senin, 18 April 2026',
-      time: '13:00 - 15:30',
-      room: 'Ruang 101, Gedung B',
-      status: AttendanceStatus.alfa,
-      meeting: 10,
-    ),
-    _AttendanceRecord(
-      courseName: 'Pemrograman Web Lanjut',
-      date: 'Senin, 11 April 2026',
-      time: '08:00 - 10:30',
-      room: 'Ruang 201, Gedung A',
-      status: AttendanceStatus.hadir,
-      meeting: 10,
-    ),
   ];
 
   @override
@@ -106,22 +41,11 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
     super.dispose();
   }
 
-  List<_AttendanceRecord> get _filtered {
+  List<AttendanceModel> _getFiltered(List<AttendanceModel> records) {
     final tab = _filterTabs[_tabController.index];
-    if (tab == 'Semua') return _records;
-    return _records
-        .where((r) => r.status.label == tab)
-        .toList();
+    if (tab == 'Semua') return records;
+    return records.where((r) => r.status.label == tab).toList();
   }
-
-  int get _hadirCount =>
-      _records.where((r) => r.status == AttendanceStatus.hadir).length;
-  int get _izinCount =>
-      _records.where((r) => r.status == AttendanceStatus.izin).length;
-  int get _sakitCount =>
-      _records.where((r) => r.status == AttendanceStatus.sakit).length;
-  int get _alfaCount =>
-      _records.where((r) => r.status == AttendanceStatus.alfa).length;
 
   @override
   Widget build(BuildContext context) {
@@ -148,40 +72,57 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
           ),
         ),
       ),
-      body: Column(
-        children: [
-          // ── Stats Summary ───────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(AppSizes.pagePadding),
-            color: AppColors.surface,
-            child: StatCardRow(
-              hadir: _hadirCount,
-              izin: _izinCount,
-              sakit: _sakitCount,
-              alfa: _alfaCount,
-            ),
-          ),
-          const Divider(height: 1, color: AppColors.border),
+      body: StreamBuilder<List<AttendanceModel>>(
+        stream: _dbService.getStudentAttendanceStream(widget.user.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final records = snapshot.data ?? [];
+          final filtered = _getFiltered(records);
 
-          // ── List ────────────────────────────────────────
-          Expanded(
-            child: _filtered.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Tidak ada data absensi',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(AppSizes.pagePadding),
-                    itemCount: _filtered.length,
-                    separatorBuilder: (ctx, i) =>
-                        const SizedBox(height: AppSizes.sm),
-                    itemBuilder: (ctx, i) =>
-                        _AttendanceRecordCard(record: _filtered[i]),
-                  ),
-          ),
-        ],
+          // Hitung statistik
+          int hadir = records.where((r) => r.status == AttendanceStatus.hadir).length;
+          int izin = records.where((r) => r.status == AttendanceStatus.izin).length;
+          int sakit = records.where((r) => r.status == AttendanceStatus.sakit).length;
+          int alfa = records.where((r) => r.status == AttendanceStatus.alfa).length;
+
+          return Column(
+            children: [
+              // ── Stats Summary ───────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(AppSizes.pagePadding),
+                color: AppColors.surface,
+                child: StatCardRow(
+                  hadir: hadir,
+                  izin: izin,
+                  sakit: sakit,
+                  alfa: alfa,
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.border),
+
+              // ── List ────────────────────────────────────────
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Tidak ada data absensi',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(AppSizes.pagePadding),
+                        itemCount: filtered.length,
+                        separatorBuilder: (ctx, i) =>
+                            const SizedBox(height: AppSizes.sm),
+                        itemBuilder: (ctx, i) =>
+                            _AttendanceRecordCard(record: filtered[i]),
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -189,7 +130,7 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
 
 // ── Attendance Record Card ──────────────────────────────────────
 class _AttendanceRecordCard extends StatelessWidget {
-  final _AttendanceRecord record;
+  final AttendanceModel record;
   const _AttendanceRecordCard({required this.record});
 
   Color get _statusColor {
@@ -300,7 +241,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  record.date,
+                  DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(record.date),
                   style: const TextStyle(
                     fontSize: AppSizes.fontSm,
                     color: AppColors.textSecondary,
@@ -313,7 +254,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                         size: 12, color: AppColors.textHint),
                     const SizedBox(width: 3),
                     Text(
-                      record.time,
+                      DateFormat('HH:mm').format(record.date),
                       style: const TextStyle(
                         fontSize: AppSizes.fontXs,
                         color: AppColors.textHint,
@@ -345,20 +286,4 @@ class _AttendanceRecordCard extends StatelessWidget {
   }
 }
 
-class _AttendanceRecord {
-  final String courseName;
-  final String date;
-  final String time;
-  final String room;
-  final AttendanceStatus status;
-  final int meeting;
-
-  const _AttendanceRecord({
-    required this.courseName,
-    required this.date,
-    required this.time,
-    required this.room,
-    required this.status,
-    required this.meeting,
-  });
-}
+// File cleanup: removed dummy _AttendanceRecord class as it was replaced by AttendanceModel.
