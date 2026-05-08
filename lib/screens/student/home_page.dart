@@ -10,6 +10,7 @@ import '../../services/database_service.dart';
 import '../../widgets/stat_card.dart';
 import '../shared/profile_page.dart';
 import 'history_student.dart';
+import 'all_courses_page.dart';
 
 class StudentHomePage extends StatefulWidget {
   final UserModel user;
@@ -102,13 +103,36 @@ class _StudentHomeTab extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(
                     AppSizes.pagePadding, AppSizes.lg,
                     AppSizes.pagePadding, AppSizes.md),
-                child: const Text(
-                  'Jadwal Kuliah Hari Ini',
-                  style: TextStyle(
-                    fontSize: AppSizes.fontLg,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Jadwal Kuliah Hari Ini',
+                      style: TextStyle(
+                        fontSize: AppSizes.fontLg,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AllCoursesPage(user: user),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        AppStrings.lihatSemua,
+                        style: TextStyle(
+                          fontSize: AppSizes.fontSm,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -116,7 +140,7 @@ class _StudentHomeTab extends StatelessWidget {
             // ── Course Cards ────────────────────────────────
             StreamBuilder<List<CourseModel>>(
               stream: dbService.getStudentCoursesStream(
-                  user.prodi ?? '', 5), // Asumsi semester 5
+                  user.prodi ?? '', user.semester ?? 0),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SliverToBoxAdapter(

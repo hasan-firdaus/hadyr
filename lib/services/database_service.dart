@@ -66,6 +66,38 @@ class DatabaseService {
             .toList());
   }
 
+  /// Stream semua jadwal mahasiswa (untuk Lihat Semua)
+  Stream<List<CourseModel>> getAllStudentCoursesStream(
+      String prodi, int semester) {
+    return _db
+        .collection('courses')
+        .where('prodi', isEqualTo: prodi)
+        .where('semester', isEqualTo: semester)
+        .snapshots()
+        .map((snap) {
+      final courses =
+          snap.docs.map((d) => CourseModel.fromMap(d.id, d.data())).toList();
+
+      // Urutkan berdasarkan hari
+      final dayOrder = [
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+        'Minggu'
+      ];
+      courses.sort((a, b) {
+        int dayA = dayOrder.indexOf(a.day);
+        int dayB = dayOrder.indexOf(b.day);
+        if (dayA != dayB) return dayA.compareTo(dayB);
+        return a.startTime.compareTo(b.startTime);
+      });
+      return courses;
+    });
+  }
+
   // ─── ATTENDANCE ─────────────────────────────────────────────
 
   /// Stream semua absensi untuk kelas tertentu (untuk dosen)

@@ -9,6 +9,7 @@ class UserModel {
   final String? prodi;
   final String? fakultas;
   final String? jabatan;
+  final int? semester; // for student
 
   const UserModel({
     required this.uid,
@@ -21,6 +22,7 @@ class UserModel {
     this.prodi,
     this.fakultas,
     this.jabatan,
+    this.semester,
   });
 
   bool get isLecturer => role == 'lecturer';
@@ -38,6 +40,7 @@ class UserModel {
       prodi: map['prodi'],
       fakultas: map['fakultas'],
       jabatan: map['jabatan'],
+      semester: map['semester'],
     );
   }
 
@@ -53,6 +56,7 @@ class UserModel {
       'prodi': prodi,
       'fakultas': fakultas,
       'jabatan': jabatan,
+      'semester': semester,
     };
   }
 
@@ -74,6 +78,7 @@ class UserModel {
       prodi: prodi ?? this.prodi,
       fakultas: fakultas ?? this.fakultas,
       jabatan: jabatan ?? this.jabatan,
+      semester: semester ?? this.semester,
     );
   }
 }

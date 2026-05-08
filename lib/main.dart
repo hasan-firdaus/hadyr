@@ -45,34 +45,13 @@ class HadyrApp extends StatelessWidget {
 
       case '/lecturer/dashboard':
         final user = settings.arguments as UserModel?;
-        return _slide(LecturerDashboard(
-          user: user ??
-              const UserModel(
-                uid: 'demo',
-                name: 'Dr. Hendra Gunawan, M.Kom',
-                email: 'hendra@kampus.ac.id',
-                role: 'lecturer',
-                nidn: '198501152010011002',
-                prodi: 'Teknik Informatika',
-                fakultas: 'Fakultas Ilmu Komputer',
-                jabatan: 'Apt. Dkt',
-              ),
-        ));
+        if (user == null) return _fade(const LoginScreen());
+        return _slide(LecturerDashboard(user: user));
 
       case '/student/home':
         final user = settings.arguments as UserModel?;
-        return _slide(StudentHomePage(
-          user: user ??
-              const UserModel(
-                uid: 'demo2',
-                name: 'Budi Santoso',
-                email: 'budi@mahasiswa.ac.id',
-                role: 'student',
-                nim: '211011001',
-                prodi: 'Teknik Informatika',
-                fakultas: 'Fakultas Ilmu Komputer',
-              ),
-        ));
+        if (user == null) return _fade(const LoginScreen());
+        return _slide(StudentHomePage(user: user));
 
       default:
         return _fade(const SplashScreen());

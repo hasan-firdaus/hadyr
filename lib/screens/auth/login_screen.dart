@@ -42,43 +42,6 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleLogin() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
-    
-    // --- DEMO BYPASS ---
-    // Karena halaman register belum ada, kita gunakan bypass untuk testing UI
-    if (_emailCtrl.text == 'dosen@demo.com') {
-      await Future.delayed(const Duration(seconds: 1)); // simulasi loading
-      if (mounted) setState(() => _isLoading = false);
-      // Verify selected tab matches lecturer role
-      if (_tabController.index != 0) {
-        _showError('Akun Dosen hanya dapat login melalui tab Dosen');
-        return;
-      }
-      _navigateByRole(const UserModel(
-        uid: 'dosen-demo',
-        name: 'Dr. Hendra Gunawan, M.Kom',
-        email: 'dosen@demo.com',
-        role: 'lecturer',
-        nidn: '198501152010011002',
-      ));
-      return;
-    } else if (_emailCtrl.text == 'mhs@demo.com') {
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) setState(() => _isLoading = false);
-      // Verify selected tab matches student role
-      if (_tabController.index != 1) {
-        _showError('Akun Mahasiswa hanya dapat login melalui tab Mahasiswa');
-        return;
-      }
-      _navigateByRole(const UserModel(
-        uid: 'mhs-demo',
-        name: 'Budi Santoso',
-        email: 'mhs@demo.com',
-        role: 'student',
-        nim: '211011001',
-      ));
-      return;
-    }
-    // -------------------
 
     try {
       final user = await _authService.login(

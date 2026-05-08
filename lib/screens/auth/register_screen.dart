@@ -20,6 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nidnNimCtrl = TextEditingController();
+  final _prodiCtrl = TextEditingController();
+  final _semesterCtrl = TextEditingController();
   
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -47,6 +49,8 @@ class _RegisterScreenState extends State<RegisterScreen>
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _nidnNimCtrl.dispose();
+    _prodiCtrl.dispose();
+    _semesterCtrl.dispose();
     super.dispose();
   }
 
@@ -64,6 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen>
         role: isLecturer ? 'lecturer' : 'student',
         nidn: isLecturer ? _nidnNimCtrl.text.trim() : null,
         nim: !isLecturer ? _nidnNimCtrl.text.trim() : null,
+        prodi: !isLecturer ? _prodiCtrl.text.trim() : null,
+        semester: !isLecturer ? int.tryParse(_semesterCtrl.text) : null,
       );
 
       if (!mounted) return;
@@ -188,7 +194,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                     ),
                     const SizedBox(height: AppSizes.md),
 
-                    // Role Specific (NIP/NIM)
                     TextFormField(
                       controller: _nidnNimCtrl,
                       keyboardType: TextInputType.number,
@@ -200,6 +205,29 @@ class _RegisterScreenState extends State<RegisterScreen>
                         prefixIcon: const Icon(Icons.badge_outlined),
                       ),
                     ),
+                    if (_tabController.index == 1) ...[
+                      const SizedBox(height: AppSizes.md),
+                      TextFormField(
+                        controller: _prodiCtrl,
+                        validator: (v) => v!.isEmpty ? 'Prodi tidak boleh kosong' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Program Studi',
+                          prefixIcon: Icon(Icons.school_outlined),
+                          hintText: 'Contoh: Teknik Informatika',
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      TextFormField(
+                        controller: _semesterCtrl,
+                        keyboardType: TextInputType.number,
+                        validator: (v) => v!.isEmpty ? 'Semester tidak boleh kosong' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Semester',
+                          prefixIcon: Icon(Icons.calendar_view_day_outlined),
+                          hintText: 'Contoh: 5',
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSizes.md),
 
                     // Password

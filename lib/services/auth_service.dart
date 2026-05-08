@@ -32,6 +32,8 @@ class AuthService {
     required String role,
     String? nidn,
     String? nim,
+    String? prodi,
+    int? semester,
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -48,6 +50,8 @@ class AuthService {
         role: role,
         nidn: nidn,
         nim: nim,
+        prodi: prodi,
+        semester: semester,
       );
 
       await _firestore
