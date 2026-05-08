@@ -73,11 +73,13 @@ class DatabaseService {
     return _db
         .collection('attendance')
         .where('courseId', isEqualTo: courseId)
-        .orderBy('date', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => AttendanceModel.fromMap(d.id, d.data()))
-            .toList());
+        .map((snap) {
+      final records =
+          snap.docs.map((d) => AttendanceModel.fromMap(d.id, d.data())).toList();
+      records.sort((a, b) => b.date.compareTo(a.date)); // Sort in memory
+      return records;
+    });
   }
 
   /// Stream riwayat absensi mahasiswa
@@ -85,11 +87,23 @@ class DatabaseService {
     return _db
         .collection('attendance')
         .where('studentId', isEqualTo: studentId)
-        .orderBy('date', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => AttendanceModel.fromMap(d.id, d.data()))
-            .toList());
+        .map((snap) {
+      final records =
+          snap.docs.map((d) => AttendanceModel.fromMap(d.id, d.data())).toList();
+      records.sort((a, b) => b.date.compareTo(a.date)); // Sort in memory
+      return records;
+    });
+  }
+
+  /// Stream semua riwayat absensi (untuk filter di memory)
+  Stream<List<AttendanceModel>> getAllAttendanceStream() {
+    return _db.collection('attendance').snapshots().map((snap) {
+      final records =
+          snap.docs.map((d) => AttendanceModel.fromMap(d.id, d.data())).toList();
+      records.sort((a, b) => b.date.compareTo(a.date));
+      return records;
+    });
   }
 
   /// Simpan atau update absensi (batch)

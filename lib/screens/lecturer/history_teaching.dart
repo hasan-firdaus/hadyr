@@ -29,7 +29,7 @@ class _HistoryTeachingPageState extends State<HistoryTeachingPage> {
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<List<AttendanceModel>>(
-        stream: _dbService.getCourseAttendanceStream(''),
+        stream: _dbService.getAllAttendanceStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
