@@ -22,6 +22,36 @@ class DatabaseService {
             .toList());
   }
 
+  /// Stream semua jadwal dosen (untuk Lihat Semua)
+  Stream<List<CourseModel>> getAllLecturerCoursesStream(String lecturerId) {
+    return _db
+        .collection('courses')
+        .where('lecturerId', isEqualTo: lecturerId)
+        .snapshots()
+        .map((snap) {
+      final courses =
+          snap.docs.map((d) => CourseModel.fromMap(d.id, d.data())).toList();
+
+      // Urutkan berdasarkan hari
+      final dayOrder = [
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+        'Minggu'
+      ];
+      courses.sort((a, b) {
+        int dayA = dayOrder.indexOf(a.day);
+        int dayB = dayOrder.indexOf(b.day);
+        if (dayA != dayB) return dayA.compareTo(dayB);
+        return a.startTime.compareTo(b.startTime);
+      });
+      return courses;
+    });
+  }
+
   /// Stream semua kelas mahasiswa (by prodi/semester)
   Stream<List<CourseModel>> getStudentCoursesStream(String prodi, int semester) {
     final today = AppUtils.getCurrentDayName();

@@ -9,6 +9,7 @@ import '../../widgets/stat_card.dart';
 import '../shared/profile_page.dart';
 import 'history_teaching.dart';
 import 'input_attendance.dart';
+import 'all_schedules_page.dart';
 
 class LecturerDashboard extends StatefulWidget {
   final UserModel user;
@@ -128,7 +129,14 @@ class _DashboardHome extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AllSchedulesPage(user: user),
+                          ),
+                        );
+                      },
                       child: const Text(
                         AppStrings.lihatSemua,
                         style: TextStyle(
