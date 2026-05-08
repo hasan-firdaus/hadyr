@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen>
         name: 'Dr. Hendra Gunawan, M.Kom',
         email: 'dosen@demo.com',
         role: 'lecturer',
-        nip: '198501152010011002',
+        nidn: '198501152010011002',
       ));
       return;
     } else if (_emailCtrl.text == 'mhs@demo.com') {

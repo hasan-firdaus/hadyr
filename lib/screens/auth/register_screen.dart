@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _nipNimCtrl = TextEditingController();
+  final _nidnNimCtrl = TextEditingController();
   
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
-          _nipNimCtrl.clear();
+          _nidnNimCtrl.clear();
         });
       }
     });
@@ -46,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
-    _nipNimCtrl.dispose();
+    _nidnNimCtrl.dispose();
     super.dispose();
   }
 
@@ -62,8 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen>
         password: _passwordCtrl.text,
         name: _nameCtrl.text.trim(),
         role: isLecturer ? 'lecturer' : 'student',
-        nip: isLecturer ? _nipNimCtrl.text.trim() : null,
-        nim: !isLecturer ? _nipNimCtrl.text.trim() : null,
+        nidn: isLecturer ? _nidnNimCtrl.text.trim() : null,
+        nim: !isLecturer ? _nidnNimCtrl.text.trim() : null,
       );
 
       if (!mounted) return;
@@ -190,13 +190,13 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                     // Role Specific (NIP/NIM)
                     TextFormField(
-                      controller: _nipNimCtrl,
+                      controller: _nidnNimCtrl,
                       keyboardType: TextInputType.number,
                       validator: (v) => v!.isEmpty 
-                          ? '${_tabController.index == 0 ? "NIP" : "NIM"} tidak boleh kosong' 
+                          ? '${_tabController.index == 0 ? "NIDN" : "NIM"} tidak boleh kosong' 
                           : null,
                       decoration: InputDecoration(
-                        labelText: _tabController.index == 0 ? AppStrings.nip : AppStrings.nim,
+                        labelText: _tabController.index == 0 ? AppStrings.nidn : AppStrings.nim,
                         prefixIcon: const Icon(Icons.badge_outlined),
                       ),
                     ),

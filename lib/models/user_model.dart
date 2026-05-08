@@ -3,7 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String role; // 'lecturer' | 'student'
-  final String? nip; // for lecturer
+  final String? nidn; // for lecturer
   final String? nim; // for student
   final String? photoUrl;
   final String? prodi;
@@ -15,7 +15,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.role,
-    this.nip,
+    this.nidn,
     this.nim,
     this.photoUrl,
     this.prodi,
@@ -32,7 +32,7 @@ class UserModel {
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       role: map['role'] ?? 'student',
-      nip: map['nip'],
+      nidn: map['nidn'] ?? map['nip'],
       nim: map['nim'],
       photoUrl: map['photoUrl'],
       prodi: map['prodi'],
@@ -47,7 +47,7 @@ class UserModel {
       'name': name,
       'email': email,
       'role': role,
-      'nip': nip,
+      'nidn': nidn,
       'nim': nim,
       'photoUrl': photoUrl,
       'prodi': prodi,
@@ -68,7 +68,7 @@ class UserModel {
       name: name ?? this.name,
       email: email,
       role: role,
-      nip: nip,
+      nidn: nidn,
       nim: nim,
       photoUrl: photoUrl ?? this.photoUrl,
       prodi: prodi ?? this.prodi,

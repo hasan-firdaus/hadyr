@@ -235,9 +235,9 @@ class _DashboardHome extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (user.nip != null)
+                    if (user.nidn != null)
                       Text(
-                        'NIP: ${user.nip}',
+                        'NIDN: ${user.nidn}',
                         style: const TextStyle(
                           fontSize: AppSizes.fontSm,
                           color: AppColors.textSecondary,

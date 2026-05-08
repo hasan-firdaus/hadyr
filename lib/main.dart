@@ -50,7 +50,7 @@ class HadyrApp extends StatelessWidget {
                 name: 'Dr. Hendra Gunawan, M.Kom',
                 email: 'hendra@kampus.ac.id',
                 role: 'lecturer',
-                nip: '198501152010011002',
+                nidn: '198501152010011002',
                 prodi: 'Teknik Informatika',
                 fakultas: 'Fakultas Ilmu Komputer',
                 jabatan: 'Apt. Dkt',

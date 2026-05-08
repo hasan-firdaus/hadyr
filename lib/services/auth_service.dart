@@ -30,7 +30,7 @@ class AuthService {
     required String password,
     required String name,
     required String role,
-    String? nip,
+    String? nidn,
     String? nim,
   }) async {
     try {
@@ -46,7 +46,7 @@ class AuthService {
         name: name,
         email: email,
         role: role,
-        nip: nip,
+        nidn: nidn,
         nim: nim,
       );
 

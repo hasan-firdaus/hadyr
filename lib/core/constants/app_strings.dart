@@ -11,7 +11,7 @@ class AppStrings {
   static const String email = 'Email';
   static const String password = 'Password';
   static const String name = 'Nama Lengkap';
-  static const String nip = 'NIP';
+  static const String nidn = 'NIDN';
   static const String nim = 'NIM';
   static const String loginButton = 'Masuk Sekarang';
   static const String registerButton = 'Daftar Sekarang';

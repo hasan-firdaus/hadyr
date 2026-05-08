@@ -105,7 +105,7 @@ class _ProfileHeaderCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             user.isLecturer
-                ? (user.nip != null ? 'NIP: ${user.nip}' : '')
+                ? (user.nidn != null ? 'NIDN: ${user.nidn}' : '')
                 : (user.nim != null ? 'NIM: ${user.nim}' : ''),
             style: TextStyle(
               fontSize: AppSizes.fontSm,
