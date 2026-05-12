@@ -164,6 +164,16 @@ class DatabaseService {
             .toList());
   }
 
+  /// Stream data user berdasarkan UID
+  Stream<UserModel> getUserStream(String uid) {
+    return _db.collection('users').doc(uid).snapshots().map((doc) {
+      if (!doc.exists) {
+        throw Exception('User tidak ditemukan');
+      }
+      return UserModel.fromMap({'uid': doc.id, ...doc.data() as Map<String, dynamic>});
+    });
+  }
+
   /// Update profil user
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);

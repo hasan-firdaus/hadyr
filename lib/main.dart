@@ -13,8 +13,25 @@ import 'screens/student/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await initializeDateFormatting('id_ID', null);
+  
+  try {
+    // Inisialisasi Firebase dengan penanganan khusus untuk duplicate-app
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).catchError((e) {
+      if (e.toString().contains('duplicate-app')) {
+        debugPrint('Firebase already initialized, continuing...');
+        return Firebase.app(); // Gunakan app yang sudah ada
+      }
+      throw e;
+    });
+
+    await initializeDateFormatting('id_ID', null);
+  } catch (e) {
+    debugPrint('Initialization warning: $e');
+    // Kita tetap lanjut ke runApp agar tidak hang di splash
+  }
+
   runApp(const HadyrApp());
 }
 

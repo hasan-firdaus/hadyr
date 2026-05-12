@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
     appId: '1:585906745497:android:40453676def4fa2c300808',
     messagingSenderId: '585906745497',
     projectId: 'hadyr-94932',
-    storageBucket: 'hadyr-94932.firebasestorage.app',
+    storageBucket: 'hadyr-94932.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:585906745497:ios:5941027b4d64a9f7300808',
     messagingSenderId: '585906745497',
     projectId: 'hadyr-94932',
-    storageBucket: 'hadyr-94932.firebasestorage.app',
+    storageBucket: 'hadyr-94932.appspot.com',
     iosBundleId: 'com.example.hadyr',
   );
 }

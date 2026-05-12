@@ -6,6 +6,7 @@ import '../../models/course_model.dart';
 import '../../models/user_model.dart';
 import '../../services/database_service.dart';
 import '../../widgets/stat_card.dart';
+import '../../widgets/user_avatar.dart';
 import '../shared/profile_page.dart';
 import 'history_teaching.dart';
 import 'input_attendance.dart';
@@ -209,80 +210,78 @@ class _DashboardHome extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.pagePadding),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: greeting + avatar
-          Row(
+    return StreamBuilder<UserModel>(
+      stream: dbService.getUserStream(user.uid),
+      initialData: user,
+      builder: (context, snapshot) {
+        final currentUser = snapshot.data ?? user;
+        
+        return Container(
+          padding: const EdgeInsets.all(AppSizes.pagePadding),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Selamat Datang, 👋',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontSm,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user.name,
-                      style: const TextStyle(
-                        fontSize: AppSizes.fontXl,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (user.nidn != null)
-                      Text(
-                        'NIDN: ${user.nidn}',
-                        style: const TextStyle(
-                          fontSize: AppSizes.fontSm,
-                          color: AppColors.textSecondary,
+              // Top Row: greeting + avatar
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Selamat Datang, 👋',
+                          style: TextStyle(
+                            fontSize: AppSizes.fontSm,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
+                        const SizedBox(height: 2),
+                        Text(
+                          currentUser.name,
+                          style: const TextStyle(
+                            fontSize: AppSizes.fontXl,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (currentUser.nidn != null)
+                          Text(
+                            'NIDN: ${currentUser.nidn}',
+                            style: const TextStyle(
+                              fontSize: AppSizes.fontSm,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.md),
+                  UserAvatar(
+                    user: currentUser,
+                    size: AppSizes.avatarLg,
+                    iconSize: 32,
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSizes.md),
-              Container(
-                width: AppSizes.avatarLg,
-                height: AppSizes.avatarLg,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: 2),
-                ),
-                child: user.photoUrl != null
-                    ? ClipOval(
-                        child:
-                            Image.network(user.photoUrl!, fit: BoxFit.cover))
-                    : const Icon(Icons.person_rounded,
-                        size: 32, color: AppColors.primary),
+              const SizedBox(height: AppSizes.md),
+
+              // Stats Row
+              const StatCardRow(
+                hadir: 0,
+                izin: 0,
+                sakit: 0,
+                alfa: 0,
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.md),
-
-          // Stats Row
-          const StatCardRow(
-            hadir: 0,
-            izin: 0,
-            sakit: 0,
-            alfa: 0,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

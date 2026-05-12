@@ -4,55 +4,76 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../services/database_service.dart';
+import '../../widgets/user_avatar.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   final UserModel user;
 
   const ProfilePage({super.key, required this.user});
 
+  void _goToEditProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(AppStrings.profile),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () {},
-            tooltip: 'Edit Profil',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.pagePadding),
-        child: Column(
-          children: [
-            // ── Header Card ──────────────────────────────────
-            _ProfileHeaderCard(user: user),
-            const SizedBox(height: AppSizes.md),
+    return StreamBuilder<UserModel>(
+      stream: DatabaseService().getUserStream(user.uid),
+      initialData: user,
+      builder: (context, snapshot) {
+        final currentUser = snapshot.data ?? user;
 
-            // ── Info Card ────────────────────────────────────
-            _InfoCard(user: user),
-            const SizedBox(height: AppSizes.md),
-
-            // ── Stats Row (for student) ───────────────────────
-            if (user.isStudent) ...[
-              _StudentStatsCard(),
-              const SizedBox(height: AppSizes.md),
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text(AppStrings.profile),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => _goToEditProfile(context),
+                tooltip: 'Edit Profil',
+              ),
             ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSizes.pagePadding),
+            child: Column(
+              children: [
+                // ── Header Card ──────────────────────────────────
+                _ProfileHeaderCard(user: currentUser),
+                const SizedBox(height: AppSizes.md),
 
-            // ── Menu List ────────────────────────────────────
-            _MenuCard(user: user),
-            const SizedBox(height: AppSizes.md),
+                // ── Info Card ────────────────────────────────────
+                _InfoCard(user: currentUser),
+                const SizedBox(height: AppSizes.md),
 
-            // ── Logout Button ────────────────────────────────
-            _LogoutButton(context: context),
-            const SizedBox(height: AppSizes.lg),
-          ],
-        ),
-      ),
+                // ── Stats Row (for student) ───────────────────────
+                if (currentUser.isStudent) ...[
+                  _StudentStatsCard(),
+                  const SizedBox(height: AppSizes.md),
+                ],
+
+                // ── Menu List ────────────────────────────────────
+                _MenuCard(
+                  user: currentUser,
+                  onEditTap: () => _goToEditProfile(context),
+                ),
+                const SizedBox(height: AppSizes.md),
+
+                // ── Logout Button ────────────────────────────────
+                _LogoutButton(context: context),
+                const SizedBox(height: AppSizes.lg),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -78,19 +99,12 @@ class _ProfileHeaderCard extends StatelessWidget {
       child: Column(
         children: [
           // Avatar
-          Container(
-            width: AppSizes.avatarXl,
-            height: AppSizes.avatarXl,
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(51),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: user.photoUrl != null
-                ? ClipOval(
-                    child: Image.network(user.photoUrl!, fit: BoxFit.cover))
-                : const Icon(Icons.person_rounded,
-                    size: 44, color: Colors.white),
+          UserAvatar(
+            user: user,
+            size: AppSizes.avatarXl,
+            iconSize: 44,
+            color: Colors.white.withAlpha(51),
+            iconColor: Colors.white,
           ),
           const SizedBox(height: AppSizes.md),
           Text(
@@ -115,8 +129,7 @@ class _ProfileHeaderCard extends StatelessWidget {
           const SizedBox(height: AppSizes.sm),
           // Role Badge
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white.withAlpha(51),
               borderRadius: BorderRadius.circular(AppSizes.radiusFull),
@@ -144,11 +157,7 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <Map<String, dynamic>>[
-      {
-        'icon': Icons.email_outlined,
-        'label': 'Email',
-        'value': user.email,
-      },
+      {'icon': Icons.email_outlined, 'label': 'Email', 'value': user.email},
       if (user.prodi != null)
         {
           'icon': Icons.school_outlined,
@@ -175,8 +184,7 @@ class _InfoCard extends StatelessWidget {
         children: items
             .map(
               (item) => Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: AppSizes.sm + 2),
+                padding: const EdgeInsets.symmetric(vertical: AppSizes.sm + 2),
                 child: Row(
                   children: [
                     Container(
@@ -184,11 +192,13 @@ class _InfoCard extends StatelessWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusSm),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                       ),
-                      child: Icon(item['icon'] as IconData,
-                          size: 18, color: AppColors.primary),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(
@@ -198,8 +208,9 @@ class _InfoCard extends StatelessWidget {
                           Text(
                             item['label'] as String,
                             style: const TextStyle(
-                                fontSize: AppSizes.fontXs,
-                                color: AppColors.textSecondary),
+                              fontSize: AppSizes.fontXs,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                           Text(
                             item['value'] as String,
@@ -231,9 +242,13 @@ class _StudentStatsCard extends StatelessWidget {
       {
         'label': 'Kehadiran',
         'value': '87%',
-        'icon': Icons.check_circle_outlined
+        'icon': Icons.check_circle_outlined,
       },
-      {'label': 'Semester', 'value': '5', 'icon': Icons.calendar_today_outlined},
+      {
+        'label': 'Semester',
+        'value': '5',
+        'icon': Icons.calendar_today_outlined,
+      },
     ];
 
     return _SectionCard(
@@ -243,8 +258,7 @@ class _StudentStatsCard extends StatelessWidget {
           return Expanded(
             child: Column(
               children: [
-                Icon(s['icon'] as IconData,
-                    color: AppColors.primary, size: 22),
+                Icon(s['icon'] as IconData, color: AppColors.primary, size: 22),
                 const SizedBox(height: 6),
                 Text(
                   s['value'] as String,
@@ -274,7 +288,9 @@ class _StudentStatsCard extends StatelessWidget {
 // ── Menu Card ───────────────────────────────────────────────────
 class _MenuCard extends StatelessWidget {
   final UserModel user;
-  const _MenuCard({required this.user});
+  final VoidCallback onEditTap;
+
+  const _MenuCard({required this.user, required this.onEditTap});
 
   @override
   Widget build(BuildContext context) {
@@ -282,23 +298,15 @@ class _MenuCard extends StatelessWidget {
       {
         'icon': Icons.edit_outlined,
         'label': AppStrings.editProfile,
-        'onTap': () {},
+        'onTap': onEditTap,
       },
       {
         'icon': Icons.notifications_outlined,
         'label': 'Notifikasi',
         'onTap': () {},
       },
-      {
-        'icon': Icons.lock_outline,
-        'label': 'Ubah Password',
-        'onTap': () {},
-      },
-      {
-        'icon': Icons.help_outline,
-        'label': 'Bantuan',
-        'onTap': () {},
-      },
+      {'icon': Icons.lock_outline, 'label': 'Ubah Password', 'onTap': () {}},
+      {'icon': Icons.help_outline, 'label': 'Bantuan', 'onTap': () {}},
     ];
 
     return _SectionCard(
@@ -314,11 +322,13 @@ class _MenuCard extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceVariant,
-                    borderRadius:
-                        BorderRadius.circular(AppSizes.radiusSm),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                   ),
-                  child: Icon(m['icon'] as IconData,
-                      size: 18, color: AppColors.textSecondary),
+                  child: Icon(
+                    m['icon'] as IconData,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 title: Text(
                   m['label'] as String,
@@ -328,8 +338,11 @@ class _MenuCard extends StatelessWidget {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right,
-                    color: AppColors.textHint, size: 20),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textHint,
+                  size: 20,
+                ),
                 onTap: m['onTap'] as VoidCallback,
               ),
               if (m != menus.last)
@@ -369,7 +382,8 @@ class _LogoutButton extends StatelessWidget {
               ),
               title: const Text('Keluar?'),
               content: const Text(
-                  'Apakah kamu yakin ingin keluar dari akun ini?'),
+                'Apakah kamu yakin ingin keluar dari akun ini?',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
@@ -377,8 +391,10 @@ class _LogoutButton extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Keluar',
-                      style: TextStyle(color: AppColors.statusAlfa)),
+                  child: const Text(
+                    'Keluar',
+                    style: TextStyle(color: AppColors.statusAlfa),
+                  ),
                 ),
               ],
             ),
