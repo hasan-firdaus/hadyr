@@ -178,4 +178,11 @@ class DatabaseService {
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);
   }
+
+  /// Update preferensi notifikasi
+  Future<void> updateNotificationPreference(String uid, bool isEnabled) async {
+    await _db.collection('users').doc(uid).update({
+      'notificationsEnabled': isEnabled,
+    });
+  }
 }

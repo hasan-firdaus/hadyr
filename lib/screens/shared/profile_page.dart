@@ -7,6 +7,7 @@ import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../widgets/user_avatar.dart';
 import 'edit_profile_page.dart';
+import 'notification_settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   final UserModel user;
@@ -303,7 +304,14 @@ class _MenuCard extends StatelessWidget {
       {
         'icon': Icons.notifications_outlined,
         'label': 'Notifikasi',
-        'onTap': () {},
+        'onTap': () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NotificationSettingsPage(user: user),
+            ),
+          );
+        },
       },
       {'icon': Icons.lock_outline, 'label': 'Ubah Password', 'onTap': () {}},
       {'icon': Icons.help_outline, 'label': 'Bantuan', 'onTap': () {}},

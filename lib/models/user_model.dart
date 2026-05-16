@@ -11,6 +11,8 @@ class UserModel {
   final String? jabatan;
   final int? semester; // for student
 
+  final bool notificationsEnabled;
+
   const UserModel({
     required this.uid,
     required this.name,
@@ -23,6 +25,7 @@ class UserModel {
     this.fakultas,
     this.jabatan,
     this.semester,
+    this.notificationsEnabled = true,
   });
 
   bool get isLecturer => role == 'lecturer';
@@ -41,6 +44,7 @@ class UserModel {
       fakultas: map['fakultas'],
       jabatan: map['jabatan'],
       semester: map['semester'],
+      notificationsEnabled: map['notificationsEnabled'] ?? true,
     );
   }
 
@@ -57,6 +61,7 @@ class UserModel {
       'fakultas': fakultas,
       'jabatan': jabatan,
       'semester': semester,
+      'notificationsEnabled': notificationsEnabled,
     };
   }
 
@@ -66,6 +71,7 @@ class UserModel {
     String? prodi,
     String? fakultas,
     String? jabatan,
+    bool? notificationsEnabled,
   }) {
     return UserModel(
       uid: uid,
@@ -79,6 +85,7 @@ class UserModel {
       fakultas: fakultas ?? this.fakultas,
       jabatan: jabatan ?? this.jabatan,
       semester: semester ?? semester,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
     );
   }
 }

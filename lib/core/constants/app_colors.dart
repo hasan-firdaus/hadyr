@@ -28,6 +28,11 @@ class AppColors {
   static const Color statusTerlambat = Color(0xFFEC4899);
   static const Color statusTerlambatBg = Color(0xFFFDF2F8);
 
+  // Success & Error Aliases
+  static const Color success = Color(0xFF22C55E);
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
+
   // Border
   static const Color border = Color(0xFFE8ECF4);
   static const Color divider = Color(0xFFF0F2F5);
