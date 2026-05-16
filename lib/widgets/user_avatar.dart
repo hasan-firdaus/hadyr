@@ -25,6 +25,8 @@ class UserAvatar extends StatelessWidget {
         ? Icons.supervisor_account_rounded 
         : Icons.school_rounded;
 
+    final hasPhoto = user.photoUrl != null && user.photoUrl!.isNotEmpty;
+
     return Container(
       width: size,
       height: size,
@@ -35,12 +37,20 @@ class UserAvatar extends StatelessWidget {
           color: iconColor ?? AppColors.primary, 
           width: size > 60 ? 3 : 2,
         ),
+        image: hasPhoto
+            ? DecorationImage(
+                image: NetworkImage(user.photoUrl!),
+                fit: BoxFit.cover,
+              )
+            : null,
       ),
-      child: Icon(
-        avatarIcon,
-        size: iconSize,
-        color: iconColor ?? AppColors.primary,
-      ),
+      child: hasPhoto
+          ? null
+          : Icon(
+              avatarIcon,
+              size: iconSize,
+              color: iconColor ?? AppColors.primary,
+            ),
     );
   }
 }

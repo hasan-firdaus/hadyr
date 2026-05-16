@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,6 +16,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -29,12 +31,41 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    // Navigate after 2.5s
+    // Cek sesi login setelah animasi selesai
     Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
+      if (mounted) _checkAuthState();
     });
+  }
+
+  Future<void> _checkAuthState() async {
+    try {
+      final firebaseUser = _authService.currentUser;
+      if (firebaseUser != null) {
+        // User masih login, ambil data dari Firestore
+        final user = await _authService.getUserData(firebaseUser.uid);
+        if (user != null && mounted) {
+          if (user.isLecturer) {
+            Navigator.of(context).pushReplacementNamed(
+              '/lecturer/dashboard',
+              arguments: user,
+            );
+          } else {
+            Navigator.of(context).pushReplacementNamed(
+              '/student/home',
+              arguments: user,
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto-login error: $e');
+    }
+
+    // Tidak ada sesi aktif, ke halaman login
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   @override
@@ -89,3 +120,4 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
+

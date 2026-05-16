@@ -138,6 +138,72 @@ class DatabaseService {
     });
   }
 
+  /// Stream riwayat absensi berdasarkan course milik dosen tertentu
+  Stream<List<AttendanceModel>> getLecturerAttendanceStream(String lecturerId) {
+    // Pertama ambil daftar courseId milik dosen, lalu filter absensi
+    return _db
+        .collection('courses')
+        .where('lecturerId', isEqualTo: lecturerId)
+        .snapshots()
+        .asyncMap((courseSnap) async {
+      final courseIds = courseSnap.docs.map((d) => d.id).toList();
+      if (courseIds.isEmpty) return <AttendanceModel>[];
+
+      // Ambil absensi untuk setiap courseId
+      final List<AttendanceModel> allRecords = [];
+      for (final courseId in courseIds) {
+        final attSnap = await _db
+            .collection('attendance')
+            .where('courseId', isEqualTo: courseId)
+            .get();
+        allRecords.addAll(
+          attSnap.docs.map((d) => AttendanceModel.fromMap(d.id, d.data())),
+        );
+      }
+      allRecords.sort((a, b) => b.date.compareTo(a.date));
+      return allRecords;
+    });
+  }
+
+  /// Hitung jumlah pertemuan yang sudah ada untuk suatu course
+  Future<int> getCompletedMeetingCount(String courseId) async {
+    final snap = await _db
+        .collection('attendance')
+        .where('courseId', isEqualTo: courseId)
+        .get();
+    // Group by date to count unique meetings
+    final Set<String> uniqueDates = {};
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      if (data['date'] != null) {
+        final dateStr = data['date'].toString().substring(0, 10);
+        uniqueDates.add(dateStr);
+      }
+    }
+    return uniqueDates.length;
+  }
+
+  /// Cek apakah sudah ada absensi hari ini untuk course tertentu
+  Future<bool> hasAttendanceToday(String courseId) async {
+    final today = DateTime.now();
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    final snap = await _db
+        .collection('attendance')
+        .where('courseId', isEqualTo: courseId)
+        .get();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      if (data['date'] != null &&
+          data['date'].toString().startsWith(todayStr)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Simpan atau update absensi (batch)
   Future<void> saveAttendanceBatch(List<AttendanceModel> records) async {
     final batch = _db.batch();

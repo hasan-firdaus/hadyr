@@ -92,42 +92,12 @@ class _StatusBadge extends StatelessWidget {
 
   const _StatusBadge({required this.status});
 
-  Color get _bgColor {
-    switch (status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadirBg;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzinBg;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakitBg;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfaBg;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambatBg;
-    }
-  }
-
-  Color get _textColor {
-    switch (status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadir;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzin;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakit;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfa;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambat;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _bgColor,
+        color: status.bgColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusFull),
       ),
       child: Text(
@@ -135,7 +105,7 @@ class _StatusBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: AppSizes.fontXs,
           fontWeight: FontWeight.w600,
-          color: _textColor,
+          color: status.color,
         ),
       ),
     );

@@ -133,36 +133,6 @@ class _AttendanceRecordCard extends StatelessWidget {
   final AttendanceModel record;
   const _AttendanceRecordCard({required this.record});
 
-  Color get _statusColor {
-    switch (record.status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadir;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzin;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakit;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfa;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambat;
-    }
-  }
-
-  Color get _statusBg {
-    switch (record.status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadirBg;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzinBg;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakitBg;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfaBg;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambatBg;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -182,7 +152,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _statusBg,
+                  color: record.status.bgColor,
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                 ),
                 child: Center(
@@ -191,7 +161,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppSizes.fontLg,
                       fontWeight: FontWeight.w800,
-                      color: _statusColor,
+                      color: record.status.color,
                     ),
                   ),
                 ),
@@ -224,7 +194,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _statusBg,
+                        color: record.status.bgColor,
                         borderRadius:
                             BorderRadius.circular(AppSizes.radiusFull),
                       ),
@@ -233,7 +203,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: AppSizes.fontXs,
                           fontWeight: FontWeight.w600,
-                          color: _statusColor,
+                          color: record.status.color,
                         ),
                       ),
                     ),

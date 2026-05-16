@@ -27,25 +27,52 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
   bool _isLoading = true;
   bool _isSaving = false;
   List<Map<String, dynamic>> _students = [];
+  int _meetingNumber = 1;
 
   @override
   void initState() {
     super.initState();
-    _loadStudents();
+    _loadData();
   }
 
-  Future<void> _loadStudents() async {
+  Future<void> _loadData() async {
     try {
+      // Cek duplikasi: apakah sudah ada absensi hari ini
+      final alreadyExists =
+          await _dbService.hasAttendanceToday(widget.course.id);
+      if (alreadyExists && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'Absensi untuk mata kuliah ini sudah diinput hari ini.'),
+            backgroundColor: AppColors.statusIzin,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+          ),
+        );
+        Navigator.pop(context);
+        return;
+      }
+
+      // Hitung meeting number otomatis
+      final completedMeetings =
+          await _dbService.getCompletedMeetingCount(widget.course.id);
+      _meetingNumber = completedMeetings + 1;
+
       // Mengambil daftar mahasiswa berdasarkan prodi matakuliah
-      final students = await _dbService.getStudentsStream(widget.course.prodi).first;
-      
+      final students =
+          await _dbService.getStudentsStream(widget.course.prodi).first;
+
       setState(() {
-        _students = students.map((s) => {
-          'uid': s.uid,
-          'nim': s.nim ?? '-',
-          'name': s.name,
-          'status': AttendanceStatus.hadir, // DEFAULT HADIR
-        }).toList();
+        _students = students
+            .map((s) => {
+                  'uid': s.uid,
+                  'nim': s.nim ?? '-',
+                  'name': s.name,
+                  'status': AttendanceStatus.hadir, // DEFAULT HADIR
+                })
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -65,31 +92,64 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
   Future<void> _handleSave() async {
     if (_students.isEmpty) return;
 
+    // Dialog konfirmasi sebelum menyimpan
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        ),
+        title: const Text('Konfirmasi Simpan'),
+        content: Text(
+          'Anda akan menyimpan absensi Pertemuan $_meetingNumber '
+          'untuk ${_students.length} mahasiswa.\n\n'
+          'Hadir: $_hadirCount  •  Izin: $_izinCount  •  '
+          'Sakit: $_sakitCount  •  Alfa: $_alfaCount\n\n'
+          'Yakin ingin menyimpan?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     setState(() => _isSaving = true);
     try {
       final now = DateTime.now();
-      final records = _students.map((s) => AttendanceModel(
-        id: '', // Biarkan service generate ID otomatis di Firestore
-        courseId: widget.course.id,
-        courseName: widget.course.name,
-        studentId: s['uid'],
-        studentName: s['name'],
-        studentNim: s['nim'],
-        status: s['status'],
-        date: now,
-        meetingNumber: 1, // Bisa disesuaikan nanti
-        room: widget.course.room,
-        building: widget.course.building,
-      )).toList();
+      final records = _students
+          .map((s) => AttendanceModel(
+                id: '',
+                courseId: widget.course.id,
+                courseName: widget.course.name,
+                studentId: s['uid'],
+                studentName: s['name'],
+                studentNim: s['nim'],
+                status: s['status'],
+                date: now,
+                meetingNumber: _meetingNumber,
+                room: widget.course.room,
+                building: widget.course.building,
+              ))
+          .toList();
 
       await _dbService.saveAttendanceBatch(records);
 
       if (!mounted) return;
       setState(() => _isSaving = false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Absensi berhasil disimpan ke Firebase!'),
+          content: Text(
+              'Absensi Pertemuan $_meetingNumber berhasil disimpan!'),
           backgroundColor: AppColors.statusHadir,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(

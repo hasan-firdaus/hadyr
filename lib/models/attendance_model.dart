@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
+
 enum AttendanceStatus { hadir, izin, sakit, alfa, terlambat }
 
 extension AttendanceStatusExt on AttendanceStatus {
@@ -28,6 +31,36 @@ extension AttendanceStatusExt on AttendanceStatus {
         return 'A';
       case AttendanceStatus.terlambat:
         return 'T';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case AttendanceStatus.hadir:
+        return AppColors.statusHadir;
+      case AttendanceStatus.izin:
+        return AppColors.statusIzin;
+      case AttendanceStatus.sakit:
+        return AppColors.statusSakit;
+      case AttendanceStatus.alfa:
+        return AppColors.statusAlfa;
+      case AttendanceStatus.terlambat:
+        return AppColors.statusTerlambat;
+    }
+  }
+
+  Color get bgColor {
+    switch (this) {
+      case AttendanceStatus.hadir:
+        return AppColors.statusHadirBg;
+      case AttendanceStatus.izin:
+        return AppColors.statusIzinBg;
+      case AttendanceStatus.sakit:
+        return AppColors.statusSakitBg;
+      case AttendanceStatus.alfa:
+        return AppColors.statusAlfaBg;
+      case AttendanceStatus.terlambat:
+        return AppColors.statusTerlambatBg;
     }
   }
 }

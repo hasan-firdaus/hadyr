@@ -280,8 +280,31 @@ class _StudentHomeTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSizes.md),
-              // Stat summary
-              const StatCardRow(hadir: 0, izin: 0, sakit: 0, alfa: 0),
+              // Stat summary — real data
+              StreamBuilder<List<AttendanceModel>>(
+                stream: dbService.getStudentAttendanceStream(user.uid),
+                builder: (context, attSnap) {
+                  final records = attSnap.data ?? [];
+                  int hadir = records
+                      .where((r) => r.status == AttendanceStatus.hadir)
+                      .length;
+                  int izin = records
+                      .where((r) => r.status == AttendanceStatus.izin)
+                      .length;
+                  int sakit = records
+                      .where((r) => r.status == AttendanceStatus.sakit)
+                      .length;
+                  int alfa = records
+                      .where((r) => r.status == AttendanceStatus.alfa)
+                      .length;
+                  return StatCardRow(
+                    hadir: hadir,
+                    izin: izin,
+                    sakit: sakit,
+                    alfa: alfa,
+                  );
+                },
+              ),
             ],
           ),
         );
@@ -398,36 +421,6 @@ class _RecentAttendanceTile extends StatelessWidget {
   final AttendanceModel record;
   const _RecentAttendanceTile({required this.record});
 
-  Color get _statusColor {
-    switch (record.status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadir;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzin;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakit;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfa;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambat;
-    }
-  }
-
-  Color get _statusBg {
-    switch (record.status) {
-      case AttendanceStatus.hadir:
-        return AppColors.statusHadirBg;
-      case AttendanceStatus.izin:
-        return AppColors.statusIzinBg;
-      case AttendanceStatus.sakit:
-        return AppColors.statusSakitBg;
-      case AttendanceStatus.alfa:
-        return AppColors.statusAlfaBg;
-      case AttendanceStatus.terlambat:
-        return AppColors.statusTerlambatBg;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -444,7 +437,7 @@ class _RecentAttendanceTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _statusBg,
+              color: record.status.bgColor,
               borderRadius: BorderRadius.circular(AppSizes.radiusSm),
             ),
             child: Center(
@@ -453,7 +446,7 @@ class _RecentAttendanceTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppSizes.fontMd,
                   fontWeight: FontWeight.w800,
-                  color: _statusColor,
+                  color: record.status.color,
                 ),
               ),
             ),
@@ -486,7 +479,7 @@ class _RecentAttendanceTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: _statusBg,
+              color: record.status.bgColor,
               borderRadius: BorderRadius.circular(AppSizes.radiusFull),
             ),
             child: Text(
@@ -494,7 +487,7 @@ class _RecentAttendanceTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: AppSizes.fontXs,
                 fontWeight: FontWeight.w600,
-                color: _statusColor,
+                color: record.status.color,
               ),
             ),
           ),
