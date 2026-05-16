@@ -194,7 +194,8 @@ class _NotificationTile extends StatelessWidget {
       trailing: Switch.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
+        activeTrackColor: AppColors.primary.withAlpha(128),
       ),
     );
   }

@@ -77,6 +77,32 @@ class AuthService {
     await _auth.signOut();
   }
 
+  /// Ubah password
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw Exception('Sesi telah berakhir, silakan login kembali.');
+    }
+
+    try {
+      // Re-authenticate user first
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: oldPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw Exception('Password lama salah.');
+      }
+      throw _handleAuthError(e);
+    } catch (e) {
+      throw Exception('Gagal mengubah password: $e');
+    }
+  }
+
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
