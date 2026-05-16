@@ -50,7 +50,8 @@ class _HistoryTeachingPageState extends State<HistoryTeachingPage> {
 
           final Map<String, List<AttendanceModel>> grouped = {};
           for (var r in records) {
-            final key = '${r.courseId}_${DateFormat('yyyy-MM-dd').format(r.date)}';
+            final key =
+                '${r.courseId}_${DateFormat('yyyy-MM-dd').format(r.date)}';
             if (!grouped.containsKey(key)) {
               grouped[key] = [];
             }
@@ -66,11 +67,19 @@ class _HistoryTeachingPageState extends State<HistoryTeachingPage> {
             itemBuilder: (ctx, i) {
               final sessionRecords = grouped[sessionKeys[i]]!;
               final first = sessionRecords.first;
-              
-              int hadir = sessionRecords.where((r) => r.status == AttendanceStatus.hadir).length;
-              int izin = sessionRecords.where((r) => r.status == AttendanceStatus.izin).length;
-              int sakit = sessionRecords.where((r) => r.status == AttendanceStatus.sakit).length;
-              int alfa = sessionRecords.where((r) => r.status == AttendanceStatus.alfa).length;
+
+              int hadir = sessionRecords
+                  .where((r) => r.status == AttendanceStatus.hadir)
+                  .length;
+              int izin = sessionRecords
+                  .where((r) => r.status == AttendanceStatus.izin)
+                  .length;
+              int sakit = sessionRecords
+                  .where((r) => r.status == AttendanceStatus.sakit)
+                  .length;
+              int alfa = sessionRecords
+                  .where((r) => r.status == AttendanceStatus.alfa)
+                  .length;
 
               return _TeachingSessionCard(
                 courseName: first.courseName,
@@ -181,12 +190,7 @@ class _TeachingSessionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.md),
-          StatCardRow(
-            hadir: hadir,
-            izin: izin,
-            sakit: sakit,
-            alfa: alfa,
-          ),
+          StatCardRow(hadir: hadir, izin: izin, sakit: sakit, alfa: alfa),
         ],
       ),
     );
