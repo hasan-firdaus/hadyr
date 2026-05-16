@@ -9,6 +9,7 @@ import '../../widgets/user_avatar.dart';
 import 'edit_profile_page.dart';
 import 'notification_settings_page.dart';
 import 'change_password_page.dart';
+import 'help_page.dart';
 
 class ProfilePage extends StatelessWidget {
   final UserModel user;
@@ -324,7 +325,16 @@ class _MenuCard extends StatelessWidget {
           );
         },
       },
-      {'icon': Icons.help_outline, 'label': 'Bantuan', 'onTap': () {}},
+      {
+        'icon': Icons.help_outline,
+        'label': 'Bantuan',
+        'onTap': () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HelpPage()),
+          );
+        },
+      },
     ];
 
     return _SectionCard(
