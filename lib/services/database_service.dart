@@ -183,8 +183,8 @@ class DatabaseService {
     return uniqueDates.length;
   }
 
-  /// Cek apakah sudah ada absensi hari ini untuk course tertentu
-  Future<bool> hasAttendanceToday(String courseId) async {
+  /// Ambil data absensi hari ini untuk course tertentu
+  Future<List<AttendanceModel>> getTodayAttendance(String courseId) async {
     final today = DateTime.now();
     final todayStr =
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
@@ -194,14 +194,21 @@ class DatabaseService {
         .where('courseId', isEqualTo: courseId)
         .get();
 
+    final List<AttendanceModel> todayRecords = [];
     for (final doc in snap.docs) {
       final data = doc.data();
       if (data['date'] != null &&
           data['date'].toString().startsWith(todayStr)) {
-        return true;
+        todayRecords.add(AttendanceModel.fromMap(doc.id, data));
       }
     }
-    return false;
+    return todayRecords;
+  }
+
+  /// Cek apakah sudah ada absensi hari ini untuk course tertentu
+  Future<bool> hasAttendanceToday(String courseId) async {
+    final records = await getTodayAttendance(courseId);
+    return records.isNotEmpty;
   }
 
   /// Simpan atau update absensi (batch)

@@ -28,6 +28,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
   bool _isSaving = false;
   List<Map<String, dynamic>> _students = [];
   int _meetingNumber = 1;
+  bool _isEditMode = false;
 
   @override
   void initState() {
@@ -35,27 +36,90 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
     _loadData();
   }
 
+  /// Cek apakah jam kuliah masih berlangsung berdasarkan endTime
+  bool _isCourseStillOngoing() {
+    try {
+      final now = DateTime.now();
+      final parts = widget.course.endTime.split(':');
+      if (parts.length < 2) return false;
+      final endHour = int.parse(parts[0]);
+      final endMinute = int.parse(parts[1]);
+
+      final endDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        endHour,
+        endMinute,
+      );
+
+      return now.isBefore(endDateTime);
+    } catch (e) {
+      debugPrint('Error parsing endTime: $e');
+      return false;
+    }
+  }
+
   Future<void> _loadData() async {
     try {
-      // Cek duplikasi: apakah sudah ada absensi hari ini
-      final alreadyExists =
-          await _dbService.hasAttendanceToday(widget.course.id);
-      if (alreadyExists && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-                'Absensi untuk mata kuliah ini sudah diinput hari ini.'),
-            backgroundColor: AppColors.statusIzin,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-          ),
-        );
-        Navigator.pop(context);
-        return;
+      // Cek apakah sudah ada absensi hari ini
+      final existingRecords =
+          await _dbService.getTodayAttendance(widget.course.id);
+
+      if (existingRecords.isNotEmpty) {
+        // Sudah ada data absensi hari ini
+        if (_isCourseStillOngoing()) {
+          // Jam kuliah masih berlangsung → mode EDIT
+          _isEditMode = true;
+          _meetingNumber = existingRecords.first.meetingNumber;
+
+          setState(() {
+            _students = existingRecords
+                .map((r) => {
+                      'uid': r.studentId,
+                      'nim': r.studentNim,
+                      'name': r.studentName,
+                      'status': r.status,
+                      'docId': r.id, // Simpan document ID untuk update
+                    })
+                .toList();
+            _isLoading = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                    '📝 Mode Edit: Anda dapat mengubah absensi selama jam kuliah berlangsung.'),
+                backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+              ),
+            );
+          }
+          return;
+        } else {
+          // Jam kuliah sudah selesai → tidak bisa edit
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                    'Absensi sudah diinput dan jam kuliah telah berakhir. Tidak dapat diedit.'),
+                backgroundColor: AppColors.statusAlfa,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+              ),
+            );
+            Navigator.pop(context);
+          }
+          return;
+        }
       }
 
-      // Hitung meeting number otomatis
+      // Belum ada absensi → mode INPUT baru
       final completedMeetings =
           await _dbService.getCompletedMeetingCount(widget.course.id);
       _meetingNumber = completedMeetings + 1;
@@ -79,7 +143,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat data mahasiswa: $e')),
+          SnackBar(content: Text('Gagal memuat data: $e')),
         );
       }
     }
@@ -92,20 +156,20 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
   Future<void> _handleSave() async {
     if (_students.isEmpty) return;
 
-    // Dialog konfirmasi sebelum menyimpan
+    final actionLabel = _isEditMode ? 'memperbarui' : 'menyimpan';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
-        title: const Text('Konfirmasi Simpan'),
+        title: Text(_isEditMode ? 'Konfirmasi Edit' : 'Konfirmasi Simpan'),
         content: Text(
-          'Anda akan menyimpan absensi Pertemuan $_meetingNumber '
+          'Anda akan $actionLabel absensi Pertemuan $_meetingNumber '
           'untuk ${_students.length} mahasiswa.\n\n'
           'Hadir: $_hadirCount  •  Izin: $_izinCount  •  '
           'Sakit: $_sakitCount  •  Alfa: $_alfaCount\n\n'
-          'Yakin ingin menyimpan?',
+          'Yakin ingin $actionLabel?',
         ),
         actions: [
           TextButton(
@@ -114,7 +178,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Simpan'),
+            child: Text(_isEditMode ? 'Perbarui' : 'Simpan'),
           ),
         ],
       ),
@@ -127,7 +191,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
       final now = DateTime.now();
       final records = _students
           .map((s) => AttendanceModel(
-                id: '',
+                id: s['docId'] ?? '', // Gunakan docId yang ada untuk update
                 courseId: widget.course.id,
                 courseName: widget.course.name,
                 studentId: s['uid'],
@@ -146,10 +210,13 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
+      final successMsg = _isEditMode
+          ? 'Absensi Pertemuan $_meetingNumber berhasil diperbarui!'
+          : 'Absensi Pertemuan $_meetingNumber berhasil disimpan!';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'Absensi Pertemuan $_meetingNumber berhasil disimpan!'),
+          content: Text(successMsg),
           backgroundColor: AppColors.statusHadir,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -161,7 +228,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
       setState(() => _isSaving = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan absensi: $e')),
+          SnackBar(content: Text('Gagal $actionLabel absensi: $e')),
         );
       }
     }
@@ -186,7 +253,7 @@ class _InputAttendancePageState extends State<InputAttendancePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Input Absensi'),
+        title: Text(_isEditMode ? 'Edit Absensi' : 'Input Absensi'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
