@@ -33,6 +33,7 @@ class AuthService {
     String? nidn,
     String? nim,
     String? prodi,
+    String? fakultas,
     int? semester,
   }) async {
     try {
@@ -51,6 +52,7 @@ class AuthService {
         nidn: nidn,
         nim: nim,
         prodi: prodi,
+        fakultas: fakultas,
         semester: semester,
       );
 

@@ -5,7 +5,7 @@ import 'package:hadyr/firebase_options.dart';
 
 import 'core/theme/app_theme.dart';
 import 'models/user_model.dart';
-import 'screens/shared/splash_screen.dart';
+import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/lecturer/dashboard_page.dart';
@@ -44,15 +44,15 @@ class HadyrApp extends StatelessWidget {
       title: 'Hadyr',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/splash',
+      initialRoute: '/',
       onGenerateRoute: _generateRoute,
     );
   }
 
   Route<dynamic>? _generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case '/splash':
-        return _fade(const SplashScreen());
+      case '/':
+        return _fade(const AuthWrapper());
 
       case '/login':
         return _fade(const LoginScreen());
@@ -71,7 +71,7 @@ class HadyrApp extends StatelessWidget {
         return _slide(StudentHomePage(user: user));
 
       default:
-        return _fade(const SplashScreen());
+        return _fade(const AuthWrapper());
     }
   }
 
@@ -93,4 +93,67 @@ class HadyrApp extends StatelessWidget {
         ),
         transitionDuration: const Duration(milliseconds: 350),
       );
+}
+
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  final AuthService _authService = AuthService();
+  bool _isLoading = true;
+  UserModel? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    try {
+      final firebaseUser = _authService.currentUser;
+      if (firebaseUser != null) {
+        final userData = await _authService.getUserData(firebaseUser.uid);
+        if (mounted) {
+          setState(() {
+            _user = userData;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('Auto-login error: $e');
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_user != null) {
+      if (_user!.isLecturer) {
+        return LecturerDashboard(user: _user!);
+      } else {
+        return StudentHomePage(user: _user!);
+      }
+    }
+
+    return const LoginScreen();
+  }
 }

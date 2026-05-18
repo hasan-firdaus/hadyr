@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nidnNimCtrl = TextEditingController();
+  final _fakultasCtrl = TextEditingController();
   final _prodiCtrl = TextEditingController();
   final _semesterCtrl = TextEditingController();
   
@@ -49,6 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _nidnNimCtrl.dispose();
+    _fakultasCtrl.dispose();
     _prodiCtrl.dispose();
     _semesterCtrl.dispose();
     super.dispose();
@@ -68,7 +70,8 @@ class _RegisterScreenState extends State<RegisterScreen>
         role: isLecturer ? 'lecturer' : 'student',
         nidn: isLecturer ? _nidnNimCtrl.text.trim() : null,
         nim: !isLecturer ? _nidnNimCtrl.text.trim() : null,
-        prodi: !isLecturer ? _prodiCtrl.text.trim() : null,
+        prodi: _prodiCtrl.text.trim(),
+        fakultas: _fakultasCtrl.text.trim(),
         semester: !isLecturer ? int.tryParse(_semesterCtrl.text) : null,
       );
 
@@ -205,17 +208,27 @@ class _RegisterScreenState extends State<RegisterScreen>
                         prefixIcon: const Icon(Icons.badge_outlined),
                       ),
                     ),
-                    if (_tabController.index == 1) ...[
-                      const SizedBox(height: AppSizes.md),
-                      TextFormField(
-                        controller: _prodiCtrl,
-                        validator: (v) => v!.isEmpty ? 'Prodi tidak boleh kosong' : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Program Studi',
-                          prefixIcon: Icon(Icons.school_outlined),
-                          hintText: 'Contoh: Teknik Informatika',
-                        ),
+                    const SizedBox(height: AppSizes.md),
+                    TextFormField(
+                      controller: _fakultasCtrl,
+                      validator: (v) => v!.isEmpty ? 'Fakultas tidak boleh kosong' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Fakultas',
+                        prefixIcon: Icon(Icons.account_balance_outlined),
+                        hintText: 'Contoh: Teknik',
                       ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    TextFormField(
+                      controller: _prodiCtrl,
+                      validator: (v) => v!.isEmpty ? 'Program Studi tidak boleh kosong' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Program Studi',
+                        prefixIcon: Icon(Icons.school_outlined),
+                        hintText: 'Contoh: Teknik Informatika',
+                      ),
+                    ),
+                    if (_tabController.index == 1) ...[
                       const SizedBox(height: AppSizes.md),
                       TextFormField(
                         controller: _semesterCtrl,
