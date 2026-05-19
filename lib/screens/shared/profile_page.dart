@@ -71,6 +71,10 @@ class ProfilePage extends StatelessWidget {
 
                 // ── Logout Button ────────────────────────────────
                 _LogoutButton(context: context),
+                const SizedBox(height: AppSizes.xs),
+
+                // ── Delete Account Button ────────────────────────
+                _DeleteAccountButton(context: context),
                 const SizedBox(height: AppSizes.lg),
               ],
             ),
@@ -471,6 +475,238 @@ class _SectionCard extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+// ── Delete Account Button ─────────────────────────────────────────
+class _DeleteAccountButton extends StatelessWidget {
+  final BuildContext context;
+  const _DeleteAccountButton({required this.context});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton.icon(
+        icon: const Icon(Icons.delete_forever_outlined, color: AppColors.error),
+        label: const Text(
+          'Hapus Akun',
+          style: TextStyle(
+            color: AppColors.error,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+        ),
+        onPressed: () async {
+          final deleted = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false, // User must choose Cancel or enter password
+            builder: (ctx) => const DeleteAccountDialog(),
+          );
+
+          if (deleted == true) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Akun Anda berhasil dihapus secara permanen.'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+            }
+          }
+        },
+      ),
+    );
+  }
+}
+
+// ── Delete Account Confirmation Dialog ───────────────────────────
+class DeleteAccountDialog extends StatefulWidget {
+  const DeleteAccountDialog({super.key});
+
+  @override
+  State<DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  bool _obscureText = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await AuthService().deleteAccount(_passwordController.text);
+      if (mounted) {
+        Navigator.pop(context, true); // Return true on success
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      ),
+      title: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.error,
+            size: 28,
+          ),
+          const SizedBox(width: AppSizes.sm),
+          const Expanded(
+            child: Text(
+              'Hapus Akun?',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: AppSizes.fontXl,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tindakan ini permanen dan tidak dapat dibatalkan. Semua data profil, riwayat kehadiran, dan akun Anda akan dihapus secara permanen dari sistem.',
+                style: TextStyle(
+                  fontSize: AppSizes.fontSm,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AppSizes.md),
+              const Text(
+                'Konfirmasi Password',
+                style: TextStyle(
+                  fontSize: AppSizes.fontSm,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscureText,
+                enabled: !_isLoading,
+                decoration: InputDecoration(
+                  hintText: 'Masukkan password Anda',
+                  hintStyle: const TextStyle(fontSize: AppSizes.fontMd),
+                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.md,
+                    vertical: AppSizes.sm,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password wajib diisi';
+                  }
+                  return null;
+                },
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: AppSizes.sm),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(
+                    color: AppColors.error,
+                    fontSize: AppSizes.fontSm,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.pop(context, false),
+          child: const Text(
+            'Batal',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _handleDeleteAccount,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.md,
+              vertical: AppSizes.sm,
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text(
+                  'Hapus',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+        ),
+      ],
     );
   }
 }

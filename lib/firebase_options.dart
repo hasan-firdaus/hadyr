@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -54,7 +51,7 @@ class DefaultFirebaseOptions {
     appId: '1:585906745497:android:40453676def4fa2c300808',
     messagingSenderId: '585906745497',
     projectId: 'hadyr-94932',
-    storageBucket: 'hadyr-94932.appspot.com',
+    storageBucket: 'hadyr-94932.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,7 +59,18 @@ class DefaultFirebaseOptions {
     appId: '1:585906745497:ios:5941027b4d64a9f7300808',
     messagingSenderId: '585906745497',
     projectId: 'hadyr-94932',
-    storageBucket: 'hadyr-94932.appspot.com',
+    storageBucket: 'hadyr-94932.firebasestorage.app',
+    iosClientId: '585906745497-lac77o8a1c9ndbs4r2thrqqf2b53h9ng.apps.googleusercontent.com',
     iosBundleId: 'com.example.hadyr',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCUbYpCCCOqDKUXqILfm77KcYb4uRkOf7Y',
+    appId: '1:585906745497:web:ada36d319b141f9a300808',
+    messagingSenderId: '585906745497',
+    projectId: 'hadyr-94932',
+    authDomain: 'hadyr-94932.firebaseapp.com',
+    storageBucket: 'hadyr-94932.firebasestorage.app',
+  );
+
 }

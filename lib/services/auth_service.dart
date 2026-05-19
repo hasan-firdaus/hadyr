@@ -105,6 +105,37 @@ class AuthService {
     }
   }
 
+  /// Hapus akun user secara permanen
+  Future<void> deleteAccount(String password) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw Exception('Sesi telah berakhir, silakan login kembali.');
+    }
+
+    try {
+      // Re-authenticate user first (wajib sebelum menghapus akun di Firebase Auth)
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      
+      // Hapus data dari Firestore
+      await _firestore.collection('users').doc(user.uid).delete();
+      
+      // Hapus akun dari Firebase Auth
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw Exception('Password yang dimasukkan salah.');
+      }
+      throw _handleAuthError(e);
+    } catch (e) {
+      throw Exception('Gagal menghapus akun: $e');
+    }
+  }
+
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
