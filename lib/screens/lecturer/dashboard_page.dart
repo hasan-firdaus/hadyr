@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../models/attendance_model.dart';
+
 import '../../models/course_model.dart';
 import '../../models/user_model.dart';
 import '../../services/database_service.dart';
-import '../../widgets/stat_card.dart';
+
 import '../../widgets/user_avatar.dart';
 import '../shared/profile_page.dart';
 import 'history_teaching.dart';
@@ -269,36 +269,6 @@ class _DashboardHome extends StatelessWidget {
                     iconSize: 32,
                   ),
                 ],
-              ),
-              const SizedBox(height: AppSizes.md),
-
-              // Stats Row — real data
-              StreamBuilder<List<AttendanceModel>>(
-                stream: dbService.getAllAttendanceStream(),
-                builder: (context, attSnap) {
-                  final records = attSnap.data ?? [];
-                  // Filter: hanya absensi dari course milik dosen ini
-                  // (courseName bisa cocok via lecturerId di course)
-                  int hadir = records
-                      .where((r) => r.status == AttendanceStatus.hadir)
-                      .length;
-                  int izin = records
-                      .where((r) => r.status == AttendanceStatus.izin)
-                      .length;
-                  int sakit = records
-                      .where((r) => r.status == AttendanceStatus.sakit)
-                      .length;
-                  int alfa = records
-                      .where((r) => r.status == AttendanceStatus.alfa)
-                      .length;
-
-                  return StatCardRow(
-                    hadir: hadir,
-                    izin: izin,
-                    sakit: sakit,
-                    alfa: alfa,
-                  );
-                },
               ),
             ],
           ),

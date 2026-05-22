@@ -312,7 +312,6 @@ class _StudentHomeTab extends StatelessWidget {
     );
   }
 
-  // Dummy data removed.
 }
 
 // ── Student Course Card ─────────────────────────────────────────
@@ -497,4 +496,3 @@ class _RecentAttendanceTile extends StatelessWidget {
   }
 }
 
-// File cleanup: removed _RecentRecord class as it was replaced by AttendanceModel.

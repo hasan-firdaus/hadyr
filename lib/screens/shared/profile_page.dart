@@ -5,6 +5,8 @@ import '../../core/constants/app_strings.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
+import '../../models/course_model.dart';
+import '../../models/attendance_model.dart';
 import '../../widgets/user_avatar.dart';
 import 'edit_profile_page.dart';
 import 'notification_settings_page.dart';
@@ -58,7 +60,7 @@ class ProfilePage extends StatelessWidget {
 
                 // ── Stats Row (for student) ───────────────────────
                 if (currentUser.isStudent) ...[
-                  _StudentStatsCard(),
+                  _StudentStatsCard(user: currentUser),
                   const SizedBox(height: AppSizes.md),
                 ],
 
@@ -242,52 +244,80 @@ class _InfoCard extends StatelessWidget {
 
 // ── Student Stats Card ─────────────────────────────────────────
 class _StudentStatsCard extends StatelessWidget {
+  final UserModel user;
+
+  const _StudentStatsCard({required this.user});
+
   @override
   Widget build(BuildContext context) {
-    final stats = [
-      {'label': 'Total Kelas', 'value': '8', 'icon': Icons.class_outlined},
-      {
-        'label': 'Kehadiran',
-        'value': '87%',
-        'icon': Icons.check_circle_outlined,
-      },
-      {
-        'label': 'Semester',
-        'value': '5',
-        'icon': Icons.calendar_today_outlined,
-      },
-    ];
+    final dbService = DatabaseService();
 
-    return _SectionCard(
-      title: 'Ringkasan Studi',
-      child: Row(
-        children: stats.map((s) {
-          return Expanded(
-            child: Column(
-              children: [
-                Icon(s['icon'] as IconData, color: AppColors.primary, size: 22),
-                const SizedBox(height: 6),
-                Text(
-                  s['value'] as String,
-                  style: const TextStyle(
-                    fontSize: AppSizes.fontXl,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  s['label'] as String,
-                  style: const TextStyle(
-                    fontSize: AppSizes.fontXs,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
+    return StreamBuilder<List<CourseModel>>(
+      stream: dbService.getAllStudentCoursesStream(user.prodi ?? '', user.semester ?? 1),
+      builder: (context, courseSnap) {
+        final totalKelas = courseSnap.data?.length ?? 0;
+
+        return StreamBuilder<List<AttendanceModel>>(
+          stream: dbService.getStudentAttendanceStream(user.uid),
+          builder: (context, attSnap) {
+            final records = attSnap.data ?? [];
+            int hadirCount = records.where((r) => r.status == AttendanceStatus.hadir).length;
+            int totalRecords = records.length;
+            
+            String kehadiranStr = "0%";
+            if (totalRecords > 0) {
+              double percentage = (hadirCount / totalRecords) * 100;
+              kehadiranStr = "${percentage.toStringAsFixed(0)}%";
+            }
+
+            final stats = [
+              {'label': 'Total Kelas', 'value': '$totalKelas', 'icon': Icons.class_outlined},
+              {
+                'label': 'Kehadiran',
+                'value': kehadiranStr,
+                'icon': Icons.check_circle_outlined,
+              },
+              {
+                'label': 'Semester',
+                'value': '${user.semester ?? '-'}',
+                'icon': Icons.calendar_today_outlined,
+              },
+            ];
+
+            return _SectionCard(
+              title: 'Ringkasan Studi',
+              child: Row(
+                children: stats.map((s) {
+                  return Expanded(
+                    child: Column(
+                      children: [
+                        Icon(s['icon'] as IconData, color: AppColors.primary, size: 22),
+                        const SizedBox(height: 6),
+                        Text(
+                          s['value'] as String,
+                          style: const TextStyle(
+                            fontSize: AppSizes.fontXl,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          s['label'] as String,
+                          style: const TextStyle(
+                            fontSize: AppSizes.fontXs,
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

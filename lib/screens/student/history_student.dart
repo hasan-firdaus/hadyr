@@ -256,4 +256,3 @@ class _AttendanceRecordCard extends StatelessWidget {
   }
 }
 
-// File cleanup: removed dummy _AttendanceRecord class as it was replaced by AttendanceModel.
