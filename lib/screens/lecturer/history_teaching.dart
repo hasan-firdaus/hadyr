@@ -19,6 +19,11 @@ class HistoryTeachingPage extends StatefulWidget {
 class _HistoryTeachingPageState extends State<HistoryTeachingPage> {
   final DatabaseService _dbService = DatabaseService();
 
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,38 +65,41 @@ class _HistoryTeachingPageState extends State<HistoryTeachingPage> {
 
           final sessionKeys = grouped.keys.toList();
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppSizes.pagePadding),
-            itemCount: sessionKeys.length,
-            separatorBuilder: (ctx, i) => const SizedBox(height: AppSizes.sm),
-            itemBuilder: (ctx, i) {
-              final sessionRecords = grouped[sessionKeys[i]]!;
-              final first = sessionRecords.first;
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(AppSizes.pagePadding),
+              itemCount: sessionKeys.length,
+              separatorBuilder: (ctx, i) => const SizedBox(height: AppSizes.sm),
+              itemBuilder: (ctx, i) {
+                final sessionRecords = grouped[sessionKeys[i]]!;
+                final first = sessionRecords.first;
 
-              int hadir = sessionRecords
-                  .where((r) => r.status == AttendanceStatus.hadir)
-                  .length;
-              int izin = sessionRecords
-                  .where((r) => r.status == AttendanceStatus.izin)
-                  .length;
-              int sakit = sessionRecords
-                  .where((r) => r.status == AttendanceStatus.sakit)
-                  .length;
-              int alfa = sessionRecords
-                  .where((r) => r.status == AttendanceStatus.alfa)
-                  .length;
+                int hadir = sessionRecords
+                    .where((r) => r.status == AttendanceStatus.hadir)
+                    .length;
+                int izin = sessionRecords
+                    .where((r) => r.status == AttendanceStatus.izin)
+                    .length;
+                int sakit = sessionRecords
+                    .where((r) => r.status == AttendanceStatus.sakit)
+                    .length;
+                int alfa = sessionRecords
+                    .where((r) => r.status == AttendanceStatus.alfa)
+                    .length;
 
-              return _TeachingSessionCard(
-                courseName: first.courseName,
-                date: DateFormat('dd MMMM yyyy', 'id_ID').format(first.date),
-                meeting: first.meetingNumber,
-                room: first.room,
-                hadir: hadir,
-                izin: izin,
-                sakit: sakit,
-                alfa: alfa,
-              );
-            },
+                return _TeachingSessionCard(
+                  courseName: first.courseName,
+                  date: DateFormat('dd MMMM yyyy', 'id_ID').format(first.date),
+                  meeting: first.meetingNumber,
+                  room: first.room,
+                  hadir: hadir,
+                  izin: izin,
+                  sakit: sakit,
+                  alfa: alfa,
+                );
+              },
+            ),
           );
         },
       ),

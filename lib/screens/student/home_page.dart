@@ -79,7 +79,7 @@ class _StudentHomePageState extends State<StudentHomePage> {
 }
 
 // ── Student Home Tab ────────────────────────────────────────────
-class _StudentHomeTab extends StatelessWidget {
+class _StudentHomeTab extends StatefulWidget {
   final UserModel user;
   final DatabaseService dbService;
 
@@ -89,11 +89,25 @@ class _StudentHomeTab extends StatelessWidget {
   });
 
   @override
+  State<_StudentHomeTab> createState() => _StudentHomeTabState();
+}
+
+class _StudentHomeTabState extends State<_StudentHomeTab> {
+  Future<void> _onRefresh() async {
+    // Add a small delay for visual feedback
+    await Future.delayed(const Duration(milliseconds: 500));
+    // The data will be refreshed automatically through StreamBuilder
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
           slivers: [
             // ── Header ──────────────────────────────────────
             SliverToBoxAdapter(child: _buildHeader()),
@@ -120,7 +134,7 @@ class _StudentHomeTab extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => AllCoursesPage(user: user),
+                            builder: (_) => AllCoursesPage(user: widget.user),
                           ),
                         );
                       },
@@ -140,8 +154,8 @@ class _StudentHomeTab extends StatelessWidget {
 
             // ── Course Cards ────────────────────────────────
             StreamBuilder<List<CourseModel>>(
-              stream: dbService.getStudentCoursesStream(
-                  user.prodi ?? '', user.semester ?? 0),
+              stream: widget.dbService.getStudentCoursesStream(
+                  widget.user.prodi ?? '', widget.user.semester ?? 0),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SliverToBoxAdapter(
@@ -190,7 +204,7 @@ class _StudentHomeTab extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: AppSizes.pagePadding),
               sliver: StreamBuilder<List<AttendanceModel>>(
-                stream: dbService.getStudentAttendanceStream(user.uid),
+                stream: widget.dbService.getStudentAttendanceStream(widget.user.uid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SliverToBoxAdapter(
@@ -217,6 +231,7 @@ class _StudentHomeTab extends StatelessWidget {
             const SliverToBoxAdapter(
                 child: SizedBox(height: AppSizes.xl)),
           ],
+            ),
         ),
       ),
     );
@@ -224,10 +239,10 @@ class _StudentHomeTab extends StatelessWidget {
 
   Widget _buildHeader() {
     return StreamBuilder<UserModel>(
-      stream: dbService.getUserStream(user.uid),
-      initialData: user,
+      stream: widget.dbService.getUserStream(widget.user.uid),
+      initialData: widget.user,
       builder: (context, snapshot) {
-        final currentUser = snapshot.data ?? user;
+        final currentUser = snapshot.data ?? widget.user;
         
         return Container(
           padding: const EdgeInsets.all(AppSizes.pagePadding),
@@ -282,7 +297,7 @@ class _StudentHomeTab extends StatelessWidget {
               const SizedBox(height: AppSizes.md),
               // Stat summary — real data
               StreamBuilder<List<AttendanceModel>>(
-                stream: dbService.getStudentAttendanceStream(user.uid),
+                stream: widget.dbService.getStudentAttendanceStream(widget.user.uid),
                 builder: (context, attSnap) {
                   final records = attSnap.data ?? [];
                   int hadir = records

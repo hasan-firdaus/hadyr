@@ -13,72 +13,78 @@ import 'notification_settings_page.dart';
 import 'change_password_page.dart';
 import 'help_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final UserModel user;
 
   const ProfilePage({super.key, required this.user});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   void _goToEditProfile(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
+      MaterialPageRoute(builder: (_) => EditProfilePage(user: widget.user)),
     );
+  }
+
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<UserModel>(
-      stream: DatabaseService().getUserStream(user.uid),
-      initialData: user,
+      stream: DatabaseService().getUserStream(widget.user.uid),
+      initialData: widget.user,
       builder: (context, snapshot) {
-        final currentUser = snapshot.data ?? user;
+        final currentUser = snapshot.data ?? widget.user;
 
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
             title: const Text(AppStrings.profile),
             centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => _goToEditProfile(context),
-                tooltip: 'Edit Profil',
-              ),
-            ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.pagePadding),
-            child: Column(
-              children: [
-                // ── Header Card ──────────────────────────────────
-                _ProfileHeaderCard(user: currentUser),
-                const SizedBox(height: AppSizes.md),
-
-                // ── Info Card ────────────────────────────────────
-                _InfoCard(user: currentUser),
-                const SizedBox(height: AppSizes.md),
-
-                // ── Stats Row (for student) ───────────────────────
-                if (currentUser.isStudent) ...[
-                  _StudentStatsCard(user: currentUser),
+          body: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.pagePadding),
+              child: Column(
+                children: [
+                  // ── Header Card ──────────────────────────────────
+                  _ProfileHeaderCard(user: currentUser),
                   const SizedBox(height: AppSizes.md),
+
+                  // ── Info Card ────────────────────────────────────
+                  _InfoCard(user: currentUser),
+                  const SizedBox(height: AppSizes.md),
+
+                  // ── Stats Row (for student) ───────────────────────
+                  if (currentUser.isStudent) ...[
+                    _StudentStatsCard(user: currentUser),
+                    const SizedBox(height: AppSizes.md),
+                  ],
+
+                  // ── Menu List ────────────────────────────────────
+                  _MenuCard(
+                    user: currentUser,
+                    onEditTap: () => _goToEditProfile(context),
+                  ),
+                  const SizedBox(height: AppSizes.md),
+
+                  // ── Logout Button ────────────────────────────────
+                  _LogoutButton(context: context),
+                  const SizedBox(height: AppSizes.xs),
+
+                  // ── Delete Account Button ────────────────────────
+                  _DeleteAccountButton(context: context),
+                  const SizedBox(height: AppSizes.lg),
                 ],
-
-                // ── Menu List ────────────────────────────────────
-                _MenuCard(
-                  user: currentUser,
-                  onEditTap: () => _goToEditProfile(context),
-                ),
-                const SizedBox(height: AppSizes.md),
-
-                // ── Logout Button ────────────────────────────────
-                _LogoutButton(context: context),
-                const SizedBox(height: AppSizes.xs),
-
-                // ── Delete Account Button ────────────────────────
-                _DeleteAccountButton(context: context),
-                const SizedBox(height: AppSizes.lg),
-              ],
+              ),
             ),
           ),
         );

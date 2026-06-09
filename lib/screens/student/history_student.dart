@@ -41,6 +41,11 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {});
+  }
+
   List<AttendanceModel> _getFiltered(List<AttendanceModel> records) {
     final tab = _filterTabs[_tabController.index];
     if (tab == 'Semua') return records;
@@ -87,40 +92,43 @@ class _StudentHistoryPageState extends State<StudentHistoryPage>
           int sakit = records.where((r) => r.status == AttendanceStatus.sakit).length;
           int alfa = records.where((r) => r.status == AttendanceStatus.alfa).length;
 
-          return Column(
-            children: [
-              // ── Stats Summary ───────────────────────────────
-              Container(
-                padding: const EdgeInsets.all(AppSizes.pagePadding),
-                color: AppColors.surface,
-                child: StatCardRow(
-                  hadir: hadir,
-                  izin: izin,
-                  sakit: sakit,
-                  alfa: alfa,
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: Column(
+              children: [
+                // ── Stats Summary ───────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(AppSizes.pagePadding),
+                  color: AppColors.surface,
+                  child: StatCardRow(
+                    hadir: hadir,
+                    izin: izin,
+                    sakit: sakit,
+                    alfa: alfa,
+                  ),
                 ),
-              ),
-              const Divider(height: 1, color: AppColors.border),
+                const Divider(height: 1, color: AppColors.border),
 
-              // ── List ────────────────────────────────────────
-              Expanded(
-                child: filtered.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Tidak ada data absensi',
-                          style: TextStyle(color: AppColors.textSecondary),
+                // ── List ────────────────────────────────────────
+                Expanded(
+                  child: filtered.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Tidak ada data absensi',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppSizes.pagePadding),
+                          itemCount: filtered.length,
+                          separatorBuilder: (ctx, i) =>
+                              const SizedBox(height: AppSizes.sm),
+                          itemBuilder: (ctx, i) =>
+                              _AttendanceRecordCard(record: filtered[i]),
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(AppSizes.pagePadding),
-                        itemCount: filtered.length,
-                        separatorBuilder: (ctx, i) =>
-                            const SizedBox(height: AppSizes.sm),
-                        itemBuilder: (ctx, i) =>
-                            _AttendanceRecordCard(record: filtered[i]),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           );
         },
       ),

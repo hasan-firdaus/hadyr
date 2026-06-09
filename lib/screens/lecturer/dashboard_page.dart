@@ -93,7 +93,7 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
 }
 
 // ── Dashboard Home Tab ──────────────────────────────────────────
-class _DashboardHome extends StatelessWidget {
+class _DashboardHome extends StatefulWidget {
   final UserModel user;
   final DatabaseService dbService;
   final void Function(CourseModel) onInputAbsensi;
@@ -105,19 +105,33 @@ class _DashboardHome extends StatelessWidget {
   });
 
   @override
+  State<_DashboardHome> createState() => _DashboardHomeState();
+}
+
+class _DashboardHomeState extends State<_DashboardHome> {
+  Future<void> _onRefresh() async {
+    // Add a small delay for visual feedback
+    await Future.delayed(const Duration(milliseconds: 500));
+    // The data will be refreshed automatically through StreamBuilder
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // ── Header ──────────────────────────────────────
-            SliverToBoxAdapter(child: _buildHeader(context)),
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
+            slivers: [
+              // ── Header ──────────────────────────────────────
+              SliverToBoxAdapter(child: _buildHeader(context)),
 
-            // ── Jadwal Hari Ini ─────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
+              // ── Jadwal Hari Ini ─────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
                     AppSizes.pagePadding, AppSizes.lg, AppSizes.pagePadding, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -135,7 +149,7 @@ class _DashboardHome extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => AllSchedulesPage(user: user),
+                            builder: (_) => AllSchedulesPage(user: widget.user),
                           ),
                         );
                       },
@@ -155,7 +169,7 @@ class _DashboardHome extends StatelessWidget {
 
             // ── Course Cards ────────────────────────────────
             StreamBuilder<List<CourseModel>>(
-              stream: dbService.getLecturerCoursesStream(user.uid),
+              stream: widget.dbService.getLecturerCoursesStream(widget.user.uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SliverToBoxAdapter(
@@ -193,7 +207,7 @@ class _DashboardHome extends StatelessWidget {
                       ),
                       child: _CourseCard(
                         course: courses[i],
-                        onInputAbsensi: () => onInputAbsensi(courses[i]),
+                        onInputAbsensi: () => widget.onInputAbsensi(courses[i]),
                       ),
                     ),
                     childCount: courses.length,
@@ -205,6 +219,7 @@ class _DashboardHome extends StatelessWidget {
             const SliverToBoxAdapter(
                 child: SizedBox(height: AppSizes.xl)),
           ],
+            ),
         ),
       ),
     );
@@ -212,10 +227,10 @@ class _DashboardHome extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return StreamBuilder<UserModel>(
-      stream: dbService.getUserStream(user.uid),
-      initialData: user,
+      stream: widget.dbService.getUserStream(widget.user.uid),
+      initialData: widget.user,
       builder: (context, snapshot) {
-        final currentUser = snapshot.data ?? user;
+        final currentUser = snapshot.data ?? widget.user;
         
         return Container(
           padding: const EdgeInsets.all(AppSizes.pagePadding),
