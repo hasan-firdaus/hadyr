@@ -61,7 +61,7 @@ class DefaultFirebaseOptions {
     projectId: 'hadyr-94932',
     storageBucket: 'hadyr-94932.firebasestorage.app',
     iosClientId: '585906745497-lac77o8a1c9ndbs4r2thrqqf2b53h9ng.apps.googleusercontent.com',
-    iosBundleId: 'com.example.hadyr',
+    iosBundleId: 'com.lildev.hadyr',
   );
 
   static const FirebaseOptions web = FirebaseOptions(

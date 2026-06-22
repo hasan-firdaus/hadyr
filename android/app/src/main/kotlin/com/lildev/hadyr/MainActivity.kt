@@ -1,4 +1,4 @@
-package com.example.hadyr
+package com.lildev.hadyr
 
 import io.flutter.embedding.android.FlutterActivity
 
