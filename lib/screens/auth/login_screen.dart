@@ -44,10 +44,10 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      final user = await _authService.login(
-        _emailCtrl.text,
-        _passwordCtrl.text,
-      );
+      final email = _emailCtrl.text.toLowerCase().trim();
+      final password = _passwordCtrl.text;
+      
+      final user = await _authService.login(email, password);
       if (!mounted) return;
       if (user == null) {
         _showError('Akun tidak ditemukan');

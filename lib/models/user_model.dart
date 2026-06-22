@@ -84,7 +84,7 @@ class UserModel {
       prodi: prodi ?? this.prodi,
       fakultas: fakultas ?? this.fakultas,
       jabatan: jabatan ?? this.jabatan,
-      semester: semester ?? semester,
+      semester: semester ?? this.semester,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
     );
   }

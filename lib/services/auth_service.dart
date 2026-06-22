@@ -12,15 +12,26 @@ class AuthService {
   /// Login dengan email & password
   Future<UserModel?> login(String email, String password) async {
     try {
+      // Validate input
+      if (email.isEmpty || password.isEmpty) {
+        throw Exception('Email dan password tidak boleh kosong');
+      }
+      
       final credential = await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         password: password,
       );
       final user = credential.user;
-      if (user == null) return null;
-      return await getUserData(user.uid);
+      if (user == null) throw Exception('Login gagal: user tidak ditemukan');
+      
+      final userData = await getUserData(user.uid);
+      if (userData == null) throw Exception('Data user tidak lengkap');
+      
+      return userData;
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthError(e);
+      throw Exception(_handleAuthError(e));
+    } catch (e) {
+      throw Exception(e.toString());
     }
   }
 
@@ -37,21 +48,37 @@ class AuthService {
     int? semester,
   }) async {
     try {
+      // Validate required fields
+      if (email.isEmpty || password.isEmpty || name.isEmpty || role.isEmpty) {
+        throw Exception('Email, password, nama, dan role tidak boleh kosong');
+      }
+      if (password.length < 6) {
+        throw Exception('Password minimal 6 karakter');
+      }
+      
+      // Additional validation for student/lecturer specific fields
+      if (role == 'student' && nim == null) {
+        throw Exception('NIM tidak boleh kosong untuk mahasiswa');
+      }
+      if (role == 'lecturer' && nidn == null) {
+        throw Exception('NIDN tidak boleh kosong untuk dosen');
+      }
+
       final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         password: password,
       );
       final user = credential.user;
-      if (user == null) return null;
+      if (user == null) throw Exception('Registrasi gagal: user tidak ditemukan');
 
       final userModel = UserModel(
         uid: user.uid,
-        name: name,
-        email: email,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
         role: role,
-        nidn: nidn,
-        nim: nim,
-        prodi: prodi,
+        nidn: nidn?.trim(),
+        nim: nim?.trim(),
+        prodi: prodi?.trim(),
         fakultas: fakultas,
         semester: semester,
       );
@@ -63,7 +90,9 @@ class AuthService {
 
       return userModel;
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthError(e);
+      throw Exception(_handleAuthError(e));
+    } catch (e) {
+      throw Exception('Registrasi gagal: ${e.toString()}');
     }
   }
 
@@ -96,7 +125,7 @@ class AuthService {
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'wrong-password') {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         throw Exception('Password lama salah.');
       }
       throw _handleAuthError(e);
@@ -127,7 +156,7 @@ class AuthService {
       // Hapus akun dari Firebase Auth
       await user.delete();
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'wrong-password') {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         throw Exception('Password yang dimasukkan salah.');
       }
       throw _handleAuthError(e);
@@ -138,6 +167,8 @@ class AuthService {
 
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
+      case 'invalid-credential':
+        return 'Email atau password salah';
       case 'user-not-found':
         return 'Akun tidak ditemukan';
       case 'wrong-password':
