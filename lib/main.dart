@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +14,19 @@ import 'screens/student/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Tangkap error UI dari Flutter
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exception}');
+  };
+
+  // Tangkap error asinkron (Dart/Platform)
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Async Error: $error');
+    debugPrint('Stack trace: $stack');
+    return true; // Mencegah aplikasi crash (grey screen) jika memungkinkan
+  };
   
   try {
     // Inisialisasi Firebase dengan penanganan khusus untuk duplicate-app
@@ -34,6 +48,7 @@ void main() async {
 
   runApp(const HadyrApp());
 }
+
 
 class HadyrApp extends StatelessWidget {
   const HadyrApp({super.key});
