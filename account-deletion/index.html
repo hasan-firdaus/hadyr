@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hapus Akun – Hadyr</title>
+  <meta name="description" content="Panduan cara menghapus akun Anda dari aplikasi Hadyr – Sistem Kehadiran Akademik secara permanen." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #2563EB;
+      --primary-dark: #1D4ED8;
+      --primary-light: #EFF6FF;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --danger-border: #FECACA;
+      --warning: #D97706;
+      --warning-light: #FFFBEB;
+      --warning-border: #FDE68A;
+      --success: #059669;
+      --success-light: #ECFDF5;
+      --success-border: #A7F3D0;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --surface: #FFFFFF;
+      --surface-alt: #F9FAFB;
+      --border: #E5E7EB;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #3B82F6 100%);
+      color: #fff;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(37,99,235,0.35);
+    }
+
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .brand {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand span {
+      font-weight: 400;
+      opacity: 0.75;
+      font-size: 13px;
+      display: block;
+      margin-top: -2px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(160deg, #1E3A8A 0%, #1E40AF 40%, #2563EB 100%);
+      color: #fff;
+      padding: 60px 24px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      top: -200px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .hero-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      margin: 0 auto 24px;
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .hero h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      opacity: 0.82;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    /* ── Main Content ── */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+      margin-top: -32px;
+      position: relative;
+    }
+
+    /* ── Warning Banner ── */
+    .warning-banner {
+      background: var(--danger-light);
+      border: 1.5px solid var(--danger-border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+
+    .warning-banner .icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .warning-banner strong {
+      color: var(--danger);
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .warning-banner p {
+      color: #7F1D1D;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .badge {
+      width: 32px;
+      height: 32px;
+      background: var(--primary-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .step:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .step:first-child {
+      padding-top: 0;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .step-content .nav-path {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .nav-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* ── Info boxes ── */
+    .info-box {
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-top: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .info-box.warning {
+      background: var(--warning-light);
+      border: 1px solid var(--warning-border);
+    }
+
+    .info-box.info {
+      background: var(--primary-light);
+      border: 1px solid #BFDBFE;
+    }
+
+    .info-box.success {
+      background: var(--success-light);
+      border: 1px solid var(--success-border);
+    }
+
+    .info-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .info-box p {
+      font-size: 13.5px;
+      line-height: 1.55;
+    }
+
+    .info-box.warning p { color: #92400E; }
+    .info-box.info p { color: #1E40AF; }
+    .info-box.success p { color: #065F46; }
+
+    /* ── Data list ── */
+    .data-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .data-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .data-list li::before {
+      content: '✗';
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    /* ── Contact card ── */
+    .contact-card {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      text-align: center;
+    }
+
+    .contact-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+
+    .contact-card p {
+      font-size: 14px;
+      color: #1E40AF;
+      margin-bottom: 16px;
+    }
+
+    .email-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .email-link:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .card { padding: 24px 20px; }
+      .hero { padding: 48px 20px 70px; }
+      .contact-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">🎓</div>
+      <div class="brand">
+        Hadyr
+        <span>Sistem Kehadiran Akademik</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-icon">🗑️</div>
+    <h1>Hapus Akun</h1>
+    <p>Panduan langkah demi langkah untuk menghapus akun Hadyr Anda secara permanen dari sistem.</p>
+  </div>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Warning Banner -->
+    <div class="warning-banner">
+      <div class="icon">⚠️</div>
+      <div>
+        <strong>Tindakan Tidak Dapat Dibatalkan</strong>
+        <p>Penghapusan akun bersifat <strong>permanen</strong>. Semua data Anda termasuk profil dan riwayat kehadiran akan dihapus selamanya dan tidak dapat dipulihkan.</p>
+      </div>
+    </div>
+
+    <!-- Step-by-step Card -->
+    <div class="card">
+      <div class="card-title">
+        <div class="badge">📋</div>
+        Cara Menghapus Akun
+      </div>
+
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Buka Aplikasi Hadyr</strong>
+            <p>Pastikan Anda sudah masuk (login) ke akun yang ingin dihapus.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Navigasi ke Halaman Profil</strong>
+            <p>Ketuk tab <strong>Profil</strong> yang berada di bagian bawah layar (navigation bar).</p>
+            <div class="nav-path">
+              <span class="nav-pill">🏠 Beranda</span>
+              <span class="nav-arrow">→</span>
+              <span class="nav-pill">👤 Profil</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Gulir ke Bawah & Ketuk "Hapus Akun"</strong>
+            <p>Gulir ke bagian bawah halaman Profil hingga menemukan tombol merah <strong>"Hapus Akun"</strong>, lalu ketuk tombol tersebut.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Konfirmasi dengan Password</strong>
+            <p>Sebuah dialog akan muncul. Masukkan <strong>password akun Anda</strong> sebagai konfirmasi identitas, lalu ketuk tombol <strong>"Hapus"</strong>.</p>
+            <div class="info-box warning">
+              <div class="icon">🔒</div>
+              <p>Konfirmasi password diperlukan untuk memastikan keamanan dan mencegah penghapusan akun yang tidak disengaja.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Akun Berhasil Dihapus</strong>
+            <p>Sistem akan menghapus akun dan seluruh data Anda. Anda akan otomatis diarahkan kembali ke halaman login.</p>
+            <div class="info-box success">
+              <div class="icon">✅</div>
+              <p>Proses penghapusan berlangsung secara instan. Setelah berhasil, Anda tidak dapat lagi mengakses akun ini.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Data yang dihapus -->
+    <div class="card">
+      <div class="card-title">
+        <div class="badge">📦</div>
+        Data yang Akan Dihapus
+      </div>
+      <ul class="data-list">
+        <li>Data profil (nama, email, NIM/NIDN, program studi, fakultas)</li>
+        <li>Riwayat kehadiran seluruh mata kuliah</li>
+        <li>Foto profil</li>
+        <li>Pengaturan notifikasi</li>
+        <li>Kredensial login (akun Firebase Authentication)</li>
+      </ul>
+
+      <div class="info-box info" style="margin-top: 20px;">
+        <div class="icon">ℹ️</div>
+        <p>Data yang terkait dengan kelompok atau kelas (seperti data mata kuliah yang dibuat dosen) mungkin tetap ada karena merupakan data bersama dan bukan milik pribadi Anda.</p>
+      </div>
+    </div>
+
+    <!-- Alternatif -->
+    <div class="card">
+      <div class="card-title">
+        <div class="badge">💡</div>
+        Tidak Ingin Menghapus Akun?
+      </div>
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+        Jika Anda hanya ingin berhenti menggunakan aplikasi sementara, Anda cukup <strong>keluar (logout)</strong> dari akun tanpa harus menghapusnya. Akun dan data Anda akan tetap tersimpan.
+      </p>
+      <div class="info-box info">
+        <div class="icon">👋</div>
+        <p>Untuk logout: buka halaman <strong>Profil</strong>, gulir ke bawah, lalu ketuk tombol <strong>"Keluar"</strong>.</p>
+      </div>
+    </div>
+
+    <!-- Kontak -->
+    <div class="contact-card">
+      <h3>Butuh Bantuan?</h3>
+      <p>Jika mengalami masalah atau memiliki pertanyaan seputar penghapusan akun, silakan hubungi kami.</p>
+      <a href="mailto:support@hadyr.app" class="email-link" id="contact-email-btn">
+        ✉️ Hubungi Support
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2024 <strong>Hadyr</strong> – Sistem Kehadiran Akademik. Semua hak dilindungi.</p>
+    <p style="margin-top: 6px;">
+      <a href="/privacy">Kebijakan Privasi</a> &nbsp;·&nbsp;
+      <a href="/terms">Syarat & Ketentuan</a>
+    </p>
+  </footer>
+
+</body>
+</html>
